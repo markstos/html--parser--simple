@@ -81,9 +81,9 @@ with double quotes, single quotes, no quotes if there are no spaces in the value
 
 =cut
 
-our $quote_re  = qr{^([a-zA-Z0-9_-]+)\s*=\s*["]([^"]+)["]\s*(.*)$}o; # regular quotes
-our $squote_re = qr{^([a-zA-Z0-9_-]+)\s*=\s*[']([^']+)[']\s*(.*)$}o; # single quotes
-our $uquote_re = qr{^([a-zA-Z0-9_-]+)\s*=\s*([^\s'"]+)\s*(.*)$}o; # unquoted
+our $quote_re  = qr{^([a-zA-Z0-9_-]+)\s*=\s*["]([^"]+)["]\s*(.*)$}so; # regular quotes
+our $squote_re = qr{^([a-zA-Z0-9_-]+)\s*=\s*[']([^']+)[']\s*(.*)$}so; # single quotes
+our $uquote_re = qr{^([a-zA-Z0-9_-]+)\s*=\s*([^\s'"]+)\s*(.*)$}so; # unquoted
 sub parse_attributes {
     my $self = shift;  
     my $astring = shift;
