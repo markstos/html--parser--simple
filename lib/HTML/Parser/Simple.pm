@@ -1026,7 +1026,7 @@ E.g.: <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">.
 
 =head1 Method: get_current_node()
 
-Returns the node which the parser calls the current node.
+Returns the L<HTML::Parser::Simple::Tree> object which the parser calls the current node.
 
 =head1 Method: get_depth()
 

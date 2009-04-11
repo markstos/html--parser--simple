@@ -1,5 +1,8 @@
 Revision history for Perl extension HTML::Parser::Simple.
 
+      - Improved tests and documentation (Mark Stosberg)
+      - Added attribute parsing via HTML::Parser::Simple::Tree (Mark Stosberg)
+
 1.02  Thu Feb 26 11:24:00 2009
 	  - Rename scripts/parse.file.pl to scripts/parse.html.pl
 	  - Ship scripts/parse.xhtml.pl
