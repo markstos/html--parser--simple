@@ -13,7 +13,7 @@ require 5.005_62;
 
 use Carp;
 use File::Spec;
-use Tree::Simple;
+use HTML::Parser::Simple::Tree;
 
 our $VERSION = '1.02';
 
@@ -61,7 +61,6 @@ our $VERSION = '1.02';
 sub create_new_node
 {
 	my($self, $name, $attributes, $parent) = @_;
-	my($node)     = Tree::Simple -> new();
 	my($metadata) =
 	{
 		attributes => $attributes,
@@ -71,7 +70,7 @@ sub create_new_node
 		node_type  => $self -> get_node_type(),
 	};
 
-	return Tree::Simple -> new($metadata, $parent);
+	return HTML::Parser::Simple::Tree -> new($metadata, $parent);
 
 } # End of create_new_node.
 
@@ -905,8 +904,6 @@ sub traverse
 	}
 
 } # End of traverse.
-
-# -----------------------------------------------
 
 1;
 
