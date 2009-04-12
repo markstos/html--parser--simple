@@ -13,7 +13,7 @@ require 5.005_62;
 
 use Carp;
 use File::Spec;
-use HTML::Parser::Simple::Tree;
+use Tree::Simple;
 
 our $VERSION = '1.02';
 
@@ -70,7 +70,7 @@ sub create_new_node
 		node_type  => $self -> get_node_type(),
 	};
 
-	return HTML::Parser::Simple::Tree -> new($metadata, $parent);
+	return Tree::Simple -> new($metadata, $parent);
 
 } # End of create_new_node.
 
@@ -1026,7 +1026,7 @@ E.g.: <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">.
 
 =head1 Method: get_current_node()
 
-Returns the L<HTML::Parser::Simple::Tree> object which the parser calls the current node.
+Returns the L<Tree::Simple> object which the parser calls the current node.
 
 =head1 Method: get_depth()
 
