@@ -193,12 +193,14 @@ sub handle_end_tag
 {
 	my($self, $tag_name) = @_;
 
-	if ( ($tag_name eq 'head') || ($tag_name eq 'body') )
+    my $lc_tag_name = lc $tag_name;
+
+	if ( ($lc_tag_name eq 'head') || ($lc_tag_name eq 'body') )
 	{
 		$self -> set_node_type('global');
 	}
 
-	if (! $$self{'_empty'}{$tag_name})
+	if (! $$self{'_empty'}{$lc_tag_name})
 	{
 		$self -> set_current_node($self -> get_current_node() -> getParent() );
 		$self -> set_depth($self -> get_depth() - 1);
@@ -259,8 +261,15 @@ sub log
 
 sub new
 {
-	my($class, $arg) = @_;
-	my($self)        = bless({}, $class);
+    my $class = shift;
+    my $self = bless {}, $class;
+    return $self->init(@_);
+}
+
+sub init
+{
+    my $self = shift;
+	my $arg  = shift;
 
 	for my $attr_name ($self -> _standard_keys() )
 	{
@@ -683,6 +692,8 @@ sub parse_start_tag
 {
 	my($self, $tag_name, $attributes, $unary, $stack) = @_;
 
+    my $lc_tag_name = lc $tag_name;
+
 	if ($$self{'_block'}{$tag_name})
 	{
 		for (; $#$stack >= 0 && $$self{'_inline'}{$$stack[$#$stack]};)
@@ -691,12 +702,12 @@ sub parse_start_tag
 		}
 	}
 
-	if ($$self{'_close_self'}{$tag_name} && ($$stack[$#$stack] eq $tag_name) )
+	if ($$self{'_close_self'}{$lc_tag_name} && ($$stack[$#$stack] eq $tag_name) )
 	{
 		$self -> parse_end_tag($tag_name, $stack);
 	}
 
-	$unary = $$self{'_empty'}{$tag_name} || $unary;
+	$unary = $$self{'_empty'}{$lc_tag_name} || $unary;
 
 	if (! $unary)
 	{
