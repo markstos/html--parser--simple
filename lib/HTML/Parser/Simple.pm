@@ -898,7 +898,8 @@ sub traverse
 
 	$$self{'_result'} .= $index <= $#$content && defined($$content[$index]) ? $$content[$index] : '';
 
-	if (! $$self{'_empty'}{$name} && ($name ne 'root') )
+    my $lc_name = lc $name;
+	if ((not $$self{'_empty'}{$lc_name}) && ($name ne 'root') )
 	{
 		$$self{'_result'} .= "</$name>";
 	}
