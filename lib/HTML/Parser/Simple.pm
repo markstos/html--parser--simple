@@ -472,10 +472,11 @@ sub parse
 				{
 					if ($html =~ /$$self{'_tag_with_attribute'}/)
 					{
-						substr($html, 0, length $1) = '';
+                        my ($orig_text,$tag_name,$attr_string,$unary) = ($1,$2,$3,$4);
+						substr($html, 0, length $orig_text) = '';
 						$in_content                 = 0;
 
-						$self -> parse_start_tag($2, $3, $4, \@stack);
+						$self -> parse_start_tag($tag_name, $attr_string, $unary, \@stack);
 					}
 				}
 			}
