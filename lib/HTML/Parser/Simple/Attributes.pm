@@ -82,7 +82,7 @@ May also be called as a class method.
 our $quote_re  = qr{^([a-zA-Z0-9_-]+)\s*=\s*["]([^"]+)["]\s*(.*)$}so; # regular quotes
 our $squote_re = qr{^([a-zA-Z0-9_-]+)\s*=\s*[']([^']+)[']\s*(.*)$}so; # single quotes
 our $uquote_re = qr{^([a-zA-Z0-9_-]+)\s*=\s*([^\s'"]+)\s*(.*)$}so;    # unquoted
-our $bool_re   = qr{^([a-zA-Z0-9_-]+)\s*$}so;                         # a boolean, like "checked"
+our $bool_re   = qr{^([a-zA-Z0-9_-]+)\s*(.*)$}so;                         # a boolean, like "checked"
 
 sub parse_attributes {
     my $self = shift;  
@@ -113,15 +113,15 @@ sub parse_attributes {
         # For booleans, set the value to the key.
         # XXX, make this configurable, like with HTML::Parser's boolean_attribute_value method. 
         if ($astring =~ $bool_re) {
-            my ($var,$val,$suffix) = ($1,$2,$3);
+            my ($var,$suffix) = ($1,$2);
             $attrs{$var} = $var;
             $astring = $suffix;
             next BIT;
         }
 
-        if ($astring eq $org) {
+#        if ($astring eq $org) {
             croak "parse_attributes: can't parse $astring - not a properly formed attribute string"
-        }
+#        }
 
     }
 

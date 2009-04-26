@@ -8,8 +8,8 @@ my $p = HTML::Parser::Simple::Attributes->new(
 q{ type=text name="my_name"
         value='my value'
         id="O'Hare"
-        with_space = "true"
         checked
+        with_space = "true"
     });
 
 my $a = $p->get_attr;
