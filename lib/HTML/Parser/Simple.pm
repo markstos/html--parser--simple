@@ -202,8 +202,16 @@ sub handle_end_tag
 
 	if (! $$self{'_empty'}{$lc_tag_name})
 	{
-		$self -> set_current_node($self -> get_current_node() -> getParent() );
-		$self -> set_depth($self -> get_depth() - 1);
+         my $parent = $self -> get_current_node() -> getParent();
+        # root is not an object so need special handling. 
+        if ($parent eq 'root') {
+            $self -> set_current_node($self->get_root ); 
+            $self -> set_depth(0);
+        }
+        else {
+            $self -> set_current_node($parent);
+            $self -> set_depth($self -> get_depth - 1);
+        }
 	}
 
 } # End of handle_end_tag.
@@ -330,7 +338,7 @@ sub init
 	 dd => 1,
 	 dt => 1,
 	 li => 1,
-	 options => 1,
+	 option => 1,
 	 p => 1,
 	 td => 1,
 	 tfoot => 1,
@@ -610,6 +618,7 @@ sub parse_end_tag
 	my($self, $tag_name, $stack) = @_;
 
 	# Find the closest opened tag of the same name.
+    my $lc_tag_name = lc $tag_name;
 
 	my($pos);
 
@@ -617,7 +626,7 @@ sub parse_end_tag
 	{
 		for ($pos = $#$stack; $pos >= 0; $pos--)
 		{
-			if ($$stack[$pos] eq $tag_name)
+			if ($$stack[$pos] eq $lc_tag_name)
 			{
 				last;
 			}
@@ -695,7 +704,7 @@ sub parse_start_tag
 
     my $lc_tag_name = lc $tag_name;
 
-	if ($$self{'_block'}{$tag_name})
+	if ($$self{'_block'}{$lc_tag_name})
 	{
 		for (; $#$stack >= 0 && $$self{'_inline'}{$$stack[$#$stack]};)
 		{
@@ -703,7 +712,7 @@ sub parse_start_tag
 		}
 	}
 
-	if ($$self{'_close_self'}{$lc_tag_name} && ($$stack[$#$stack] eq $tag_name) )
+	if ($$self{'_close_self'}{$lc_tag_name} && ($$stack[$#$stack] eq $lc_tag_name) )
 	{
 		$self -> parse_end_tag($tag_name, $stack);
 	}
@@ -712,7 +721,7 @@ sub parse_start_tag
 
 	if (! $unary)
 	{
-		push @$stack, $tag_name;
+		push @$stack, $lc_tag_name;
 	}
 
 	$self -> handle_start_tag($tag_name, $attributes, $unary);
@@ -735,10 +744,12 @@ sub set_current_node
 {
 	my($self, $node) = @_;
 
-	if (! defined $node)
-	{
+	if (! defined $node) {
 		Carp::croak "set_current_node() called with undef";
 	}
+    elsif (! ref $node ) {
+        Carp::confess "set_current_node() called with non reference: $node"; 
+    }
 
 	$$self{'_current'} = $node;
 
@@ -908,12 +919,13 @@ sub traverse
 
 	$index = $#child + 1;
 
-	$$self{'_result'} .= $index <= $#$content && defined($$content[$index]) ? $$content[$index] : '';
+    my $maybe_content = $index <= $#$content && defined($$content[$index]) ? $$content[$index] : '';
+	$$self{'_result'} .= $maybe_content;
 
     my $lc_name = lc $name;
 	if ((not $$self{'_empty'}{$lc_name}) && ($name ne 'root') )
 	{
-		$$self{'_result'} .= "</$name>";
+         $$self{'_result'} .= "</$name>";
 	}
 
 } # End of traverse.
@@ -1109,11 +1121,9 @@ Returns undef.
 
 =head1 Method: set_depth($depth)
 
-Sets the nesting depth of the current node.
+Sets the nesting depth of the current node. The root is at depth 0
 
 Returns undef.
-
-It's just there in case you need it.
 
 =head1 Method: set_input_dir($dir_name)
 
