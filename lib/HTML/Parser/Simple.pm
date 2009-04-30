@@ -267,6 +267,7 @@ sub init
 		}
 	}
 
+    # Block Elements - HTML 4.01
 	$$self{'_block'} =
 	{
 	 address => 1,
@@ -306,6 +307,9 @@ sub init
 	 'tr' => 1,
 	 ul => 1,
 	};
+
+    # Elements that you can, intentionally, leave open
+    # (and which close themselves)
 	$$self{'_close_self'} =
 	{
 	 colgroup => 1,
@@ -320,6 +324,7 @@ sub init
 	 thead => 1,
 	 'tr' => 1,
 	};
+    # Empty Elements - HTML 4.01
 	$$self{'_empty'} =
 	{
 	 area => 1,
@@ -338,6 +343,7 @@ sub init
 	 param => 1,
 	 wbr => 1,
 	};
+    # Inline Elements - HTML 4.01
 	$$self{'_inline'} =
 	{
 	 a => 1,
