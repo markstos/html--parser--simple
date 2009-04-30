@@ -8,8 +8,8 @@ use Test::More tests => 1;
 
 # -----------------------
 
-my($data)   = Data -> new({input_dir => 't/data'});
-my($html)   = $data -> read_file('02.comment.html');
+my($data)   = Data -> new;
+my($html)   = $data -> read_file('t/data/02.comment.html');
 my($parser) = HTML::Parser::Simple -> new();
 
 $parser -> parse($html);

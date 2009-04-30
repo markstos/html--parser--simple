@@ -9,8 +9,8 @@ use Test::More 'no_plan';
 
 # -----------------------
 
-my($data)   = Data -> new({input_dir => 't/data'});
-my($html)   = $data -> read_file('01.parse.html');
+my($data)   = Data -> new;
+my($html)   = $data -> read_file('t/data/01.parse.html');
 my($parser) = HTML::Parser::Simple -> new();
 
 $parser -> parse($html);

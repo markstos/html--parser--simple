@@ -1,11 +1,4 @@
 package HTML::Parser::Simple;
-
-# Author:
-#	Ron Savage <ron@savage.net.au>
-#
-# Note:
-#	\t = 4 spaces || die.
-
 use strict;
 use warnings;
 
@@ -28,8 +21,6 @@ our $VERSION = '1.02';
 {
 	my(%_attr_data) =
 	(
-	 _input_dir  => '',
-	 _output_dir => '',
 	 _verbose    => 0,
 	 _xhtml      => 0,
 	);
@@ -96,13 +87,6 @@ sub get_depth
 
 # -----------------------------------------------
 
-sub get_input_dir
-{
-	my($self) = @_;
-
-	return $$self{'_input_dir'};
-
-} # End of get_input_dir.
 
 # -----------------------------------------------
 
@@ -113,16 +97,6 @@ sub get_node_type
 	return $$self{'_node_type'};
 
 } # End of get_node_type.
-
-# -----------------------------------------------
-
-sub get_output_dir
-{
-	my($self) = @_;
-
-	return $$self{'_output_dir'};
-
-} # End of get_output_dir.
 
 # -----------------------------------------------
 
@@ -667,11 +641,6 @@ sub parse_file
 {
 	my($self, $input_file_name, $output_file_name) = @_;
 
-	if ($self -> get_input_dir() )
-	{
-		$input_file_name = File::Spec -> catfile($self -> get_input_dir(), $input_file_name);
-	}
-
 	open(INX, $input_file_name) || Carp::croak "Can't open($input_file_name): $!";
 	my($html);
 	read(INX, $html, -s INX);
@@ -684,11 +653,6 @@ sub parse_file
 
 	$self -> parse($html);
 	$self -> traverse($self -> get_root() );
-
-	if ($self -> get_output_dir() )
-	{
-		$output_file_name = File::Spec -> catfile($self -> get_output_dir(), $output_file_name);
-	}
 
 	open(OUT, "> $output_file_name") || Carp::croak "Can't open(> $output_file_name): $!";
 	print OUT $$self{'_result'};
@@ -776,23 +740,6 @@ sub set_depth
 
 # -----------------------------------------------
 
-sub set_input_dir
-{
-	my($self, $input_dir) = @_;
-
-	if (! defined $input_dir)
-	{
-		Carp::croak "set_input_dir() called with undef";
-	}
-
-	$$self{'_input_dir'} = $input_dir;
-
-	return;
-
-} # End of set_input_dir.
-
-# -----------------------------------------------
-
 sub set_node_type
 {
 	my($self, $type) = @_;
@@ -807,23 +754,6 @@ sub set_node_type
 	return;
 
 } # End of set_node_type.
-
-# -----------------------------------------------
-
-sub set_output_dir
-{
-	my($self, $output_dir) = @_;
-
-	if (! defined $output_dir)
-	{
-		Carp::croak "set_output_dir() called with undef";
-	}
-
-	$$self{'_output_dir'} = $output_dir;
-
-	return;
-
-} # End of set_output_dir.
 
 # -----------------------------------------------
 
@@ -944,34 +874,20 @@ C<HTML::Parser::Simple> - Parse nice HTML files without needing a compiler
 	use warnings;
 	
 	use HTML::Parser::Simple;
+	my $p = HTML::Parser::Simple->new;
 	
-	# -------------------------
+	$p->parse_file('in.html', 'out.html');
+    # or 
+	$p->parse('<html>...</html>');
 	
-	# Method 1:
-	
-	my($p) = HTML::Parser::Simple -> new
-	(
-	 {
-		input_dir  => '/source/dir',
-		output_dir => '/dest/dir',
-	 }
-	);
-	
-	$p -> parse_file('in.html', 'out.html');
-	
-	# Method 2:
-	
-	my($p) = HTML::Parser::Simple -> new();
-	
-	$p -> parse('<html>...</html>');
-	$p -> traverse($p -> get_root() );
-	print $p -> result();
+	$p->traverse($p -> get_root() );
+	print $p->result();
 
 =head1 Description
 
 C<HTML::Parser::Simple> is a pure Perl module.
 
-It parses HTML V 4 files, and generates a tree of nodes per HTML tag.
+It parses HTML and XHTML files, and generates a tree of nodes per HTML tag.
 
 The data associated with each node is documented in the FAQ.
 
@@ -999,18 +915,6 @@ Call C<new()> as C<< new({option_1 => value_1, option_2 => value_2, ...}) >>.
 Available options:
 
 =over 4
-
-=item input_dir
-
-This takes the path where the input file is to read from.
-
-The default value is '' (the empty string).
-
-=item output_dir
-
-This takes the path where the output file is to be written.
-
-The default value is '' (the empty string).
 
 =item verbose
 
@@ -1058,14 +962,6 @@ Returns the L<Tree::Simple> object which the parser calls the current node.
 Returns the nesting depth of the current tag.
 
 It's just there in case you need it.
-
-=head1 Method: get_input_dir()
-
-Returns the input_dir parameter, as passed in to C<new()>.
-
-=head1 Method: get_output_dir()
-
-Returns the output_dir parameter, as passed in to C<new()>.
 
 =head1 Method: get_node_type()
 
@@ -1122,18 +1018,6 @@ Returns undef.
 =head1 Method: set_depth($depth)
 
 Sets the nesting depth of the current node. The root is at depth 0
-
-Returns undef.
-
-=head1 Method: set_input_dir($dir_name)
-
-Sets the input_dir parameter, as though it was passed in to C<new()>.
-
-Returns undef.
-
-=head1 Method: set_output_dir($dir_name)
-
-Sets the output_dir parameter, as though it was passed in to C<new()>.
 
 Returns undef.
 
@@ -1416,21 +1300,19 @@ This Perl HTML parser has been converted from a JavaScript one written by John R
 
 http://ejohn.org/files/htmlparser.js
 
-Well done John!
-
-Note also the comments published here:
+Well done John!  Note also the comments published here:
 
 http://groups.google.com/group/envjs/browse_thread/thread/edd9033b9273fa58
 
-=head1 Author
+=head1 Authors
 
-C<HTML::Parser::Simple> was written by Ron Savage I<E<lt>ron@savage.net.auE<gt>> in 2009.
-
-Home page: http://savage.net.au/index.html
+    Ron Savage C<< ron@savage.net.au >>
+    Mark Stosberg C<< mark@summersault.com >>
 
 =head1 Copyright
 
-Australian copyright (c) 2009 Ron Savage.
+Parts covered over Australian copyright (c) 2009 Ron Savage.
+Other parts are copyright (c) Mark Stosberg
 
 	All Programs of mine are 'OSI Certified Open Source Software';
 	you can redistribute them and/or modify them under the terms of

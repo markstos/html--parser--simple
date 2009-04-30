@@ -20,10 +20,7 @@ our $VERSION = '1.02';
 # Encapsulated class data.
 
 {
-	my(%_attr_data) =
-	(
-	 _input_dir => '',
-	);
+	my(%_attr_data) = ();
 
 	sub _default_for
 	{
@@ -68,7 +65,6 @@ sub new
 sub read_file
 {
 	my($self, $file_name) = @_;
-	$file_name            = "$$self{'_input_dir'}/$file_name";
 
 	open(INX, $file_name) || die "Can't open($file_name): $!";
 	my($html);
