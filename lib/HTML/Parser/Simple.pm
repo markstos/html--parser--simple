@@ -401,9 +401,8 @@ http://groups.google.com/group/envjs/browse_thread/thread/edd9033b9273fa58
 Parts covered over Australian copyright (c) 2009 Ron Savage.
 Other parts are copyright (c) Mark Stosberg
 
-	All Programs of mine are 'OSI Certified Open Source Software';
-	you can redistribute them and/or modify them under the terms of
-	The Artistic License, a copy of which is available at:
-	http://www.opensource.org/licenses/index.html
+You can redistribute and/or modify this Perl distribution under the terms of
+The Artistic License, a copy of which is available at:
+http://www.opensource.org/licenses/index.html
 
 =cut
