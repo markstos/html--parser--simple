@@ -8,16 +8,9 @@ use Carp;
 
 our $VERSION = '1.02';
 
-# -----------------------------------------------
-
-# Preloaded methods go here.
-
-# -----------------------------------------------
-
 # Encapsulated class data.
-
 {
-	my(%_attr_data) = (
+	my  %_attr_data  = (
 	 _xhtml      => 0,
 	);
 
@@ -31,11 +24,10 @@ our $VERSION = '1.02';
 	}
 }
 
-
 sub handle_comment {
 	my($self, $s) = @_;
 	$self -> handle_content($s);
-} 
+}
 
 sub handle_content {
     my ($self, $content) = @_;
@@ -46,24 +38,24 @@ sub handle_content {
 sub handle_doctype {
 	my($self, $s) = @_;
 	$self -> handle_content($s);
-} 
+}
 
 sub handle_end_tag {
 	my($self, $tag_name) = @_;
-    # Sub-class to do something interesting. 
+    # Sub-class to do something interesting.
     return 1;
 }
 
 sub handle_start_tag {
 	my($self, $tag_name, $attributes, $unary) = @_;
-    # Sub-class to do something interesting. 
+    # Sub-class to do something interesting.
     return 1;
 }
 
 sub handle_xml_declaration {
 	my($self, $s) = @_;
 	$self->handle_content($s);
-} 
+}
 
 sub new {
     my $class = shift;
@@ -242,7 +234,7 @@ sub parse {
 		}
 
 		if ($html eq $original) {
-            $self->handle_parse_error($html) 
+            $self->handle_parse_error($html)
 		}
 
 		$original = $html;
@@ -250,7 +242,7 @@ sub parse {
 
 	# Clean up any remaining tags.
 	$self -> parse_end_tag('', \@stack);
-} 
+}
 
 sub parse_end_tag {
 	my($self, $tag_name, $stack) = @_;
@@ -313,7 +305,7 @@ sub parse_start_tag {
 	}
 
 	$self -> handle_start_tag($tag_name, $attributes, $unary);
-} 
+}
 
 sub handle_parse_error {
     my ($self,$remaining_html) = @_;
@@ -337,16 +329,72 @@ C<HTML::Parser::Simple> - Parse nice HTML files without needing a compiler
 
 	use HTML::Parser::Simple;
 	my $p = HTML::Parser::Simple->new;
-	
+
 	$p->parse('<html>...</html>');
 
 =head1 Description
 
-C<HTML::Parser::Simple> is a pure Perl module.
+C<HTML::Parser::Simple> is a pure Perl HTML and XHTML Parser.
 
-It parses HTML and XHTML files.
+The way to use it is define handlers for the various types of
+content that it discovers during parsing. For now, this is done
+by defining handlers in a sub-class. A future version will allow
+defining the handlers inline with callbacks.
 
-=head1 Methods 
+Here are the names and signatures of the handlers you can define in your
+subclass:
+
+ sub handle_start_tag {
+ 	my($self, $tag_name, $attribute_string, $unary) = @_;
+     # Sub-class to do something interesting.
+     # to parse the attribute string, see HTML::Parser::Simple::Attributes,
+     # which is included in this distribution.
+     return 1;
+ }
+
+ sub handle_end_tag {
+ 	my($self, $tag_name) = @_;
+     # Sub-class to do something interesting.
+     return 1;
+ }
+
+ # The stuff between the tags
+ sub handle_content {
+     my ($self, $content) = @_;
+     # Sub-class to do something interesting;
+     return 1;
+ }
+
+ sub handle_comment {
+ 	my($self, $comment) = @_;
+ 	$self -> handle_content($comment);
+ }
+
+ sub handle_doctype {
+ 	my($self, $doctype) = @_;
+ 	$self -> handle_content($doctype);
+ }
+
+ sub handle_xml_declaration {
+ 	my($self, $s) = @_;
+ 	$self->handle_content($s);
+ }
+
+
+For examples, you can see the two sub-classes which are included in this distribution:
+
+L<HTML::Parser::Simple::Tree> - stores the parsed document in an
+L<Tree::Simple> object.  This allows for new ways to access the data, at the
+expense of storing the entire HTML document in memory as a collection of
+Tree::Simple objects.
+
+L<HTML::Parser::Simple::Compat> - is designed for some compatibility with
+HTML::Parser, allowing you to eliminate the compiler requirement that
+HTML::Parser brings it's use of XS and C. The trade-off is that the pure Perl
+approach is of course slower, and compatibility might not be perfect.
+
+
+=head1 Methods
 
 =head2 new()
 
@@ -361,7 +409,7 @@ It takes a hashref of the following options.
 
 This takes either a 0 or a 1.
 
-Boolean to optionally enable the following XHTML feature  
+Boolean to optionally enable the following XHTML feature
 
 =over 4
 
@@ -379,7 +427,13 @@ E.g.: <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">.
 
 =head2 parse($html)
 
-Parses the string of HTML in $html.
+Parses the string of HTML in $html. As it encounters different types of content,
+bits of content are passed to different handlers, which you can define, to process
+the HTML as you wish. See the Description above for details.
+
+=head1 See Also
+
+L<HTML::Parser::Simple::Attributes> - a helper module to parse start tag atttributes.
 
 =head1 Credits
 
