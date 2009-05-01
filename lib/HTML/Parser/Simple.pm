@@ -268,125 +268,18 @@ sub init
 	}
 
     # Block Elements - HTML 4.01
-	$$self{'_block'} =
-	{
-	 address => 1,
-	 applet => 1,
-	 blockquote => 1,
-	 button => 1,
-	 center => 1,
-	 dd => 1,
-	 del => 1,
-	 dir => 1,
-	 div => 1,
-	 dl => 1,
-	 dt => 1,
-	 fieldset => 1,
-	 form => 1,
-	 frameset => 1,
-	 hr => 1,
-	 iframe => 1,
-	 ins => 1,
-	 isindex => 1,
-	 li => 1,
-	 map => 1,
-	 menu => 1,
-	 noframes => 1,
-	 noscript => 1,
-	 object => 1,
-	 ol => 1,
-	 p => 1,
-	 pre => 1,
-	 script => 1,
-	 table => 1,
-	 tbody => 1,
-	 td => 1,
-	 tfoot => 1,
-	 th => 1,
-	 thead => 1,
-	 'tr' => 1,
-	 ul => 1,
-	};
+	$$self{'_block'} = _make_map(qw{ address applet blockquote button center dd del dir div dl dt fieldset form frameset hr iframe ins isindex li map menu noframes noscript object ol p pre script table tbody td tfoot th thead tr ul});
 
     # Elements that you can, intentionally, leave open
     # (and which close themselves)
-	$$self{'_close_self'} =
-	{
-	 colgroup => 1,
-	 dd => 1,
-	 dt => 1,
-	 li => 1,
-	 option => 1,
-	 p => 1,
-	 td => 1,
-	 tfoot => 1,
-	 th => 1,
-	 thead => 1,
-	 'tr' => 1,
-	};
+	$$self{'_close_self'} = _make_map(qw{ colgroup dd dt li option p td tfoot th thead tr });
+
     # Empty Elements - HTML 4.01
-	$$self{'_empty'} =
-	{
-	 area => 1,
-	 base => 1,
-	 basefont => 1,
-	 br => 1,
-	 col => 1,
-	 embed => 1,
-	 frame => 1,
-	 hr => 1,
-	 img => 1,
-	 input => 1,
-	 isindex => 1,
-	 link => 1,
-	 meta => 1,
-	 param => 1,
-	 wbr => 1,
-	};
+	$$self{'_empty'} = _make_map(qw{ area base basefont br col embed frame hr img input isindex link meta param wbr });
+
     # Inline Elements - HTML 4.01
-	$$self{'_inline'} =
-	{
-	 a => 1,
-	 abbr => 1,
-	 acronym => 1,
-	 applet => 1,
-	 b => 1,
-	 basefont => 1,
-	 bdo => 1,
-	 big => 1,
-	 br => 1,
-	 button => 1,
-	 cite => 1,
-	 code => 1,
-	 del => 1,
-	 dfn => 1,
-	 em => 1,
-	 font => 1,
-	 i => 1,
-	 iframe => 1,
-	 img => 1,
-	 input => 1,
-	 ins => 1,
-	 kbd => 1,
-	 label => 1,
-	 map => 1,
-	 object => 1,
-	 'q' => 1,
-	 's' => 1,
-	 samp => 1,
-	 script => 1,
-	 select => 1,
-	 small => 1,
-	 span => 1,
-	 strike => 1,
-	 strong => 1,
-	 sub => 1,
-	 sup => 1,
-	 textarea => 1,
-	 tt => 1,
-	 u => 1,
-	 var => 1,
-	};
+	$$self{'_inline'} = _make_map(qw{ a abbr acronym applet b basefont bdo big br button cite code del dfn em font i iframe img input ins kbd label map object q s samp script select small span strike strong sub sup textarea tt u var });
+
 	$$self{'_known_tag'} = {%{$$self{'_block'} }, %{$$self{'_close_self'} }, %{$$self{'_empty'} }, %{$$self{'_inline'} } };
 	$$self{'_result'}    = '';
 
@@ -865,6 +758,13 @@ sub traverse
 	}
 
 } # End of traverse.
+
+# Given an array, return a hashref where the array elements are keys, and the values are "1"
+sub _make_map {
+    my @list = @_;
+    my %hash = map { $_ => 1 } @list;
+    return \%hash
+}
 
 1;
 
