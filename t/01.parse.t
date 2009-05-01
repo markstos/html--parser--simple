@@ -2,7 +2,7 @@ use lib 't';
 
 use Data;
 
-use HTML::Parser::Simple;
+use HTML::Parser::Simple::Tree;
 use strict;
 
 use Test::More 'no_plan';
@@ -11,7 +11,7 @@ use Test::More 'no_plan';
 
 my($data)   = Data -> new;
 my($html)   = $data -> read_file('t/data/01.parse.html');
-my($parser) = HTML::Parser::Simple -> new();
+my($parser) = HTML::Parser::Simple::Tree -> new();
 
 $parser -> parse($html);
 $parser -> traverse($parser -> get_root() );
@@ -19,7 +19,7 @@ $parser -> traverse($parser -> get_root() );
 is($html, $parser -> result(), 'Input matches output');
 
 {
-    my($p) = HTML::Parser::Simple -> new;
+    my($p) = HTML::Parser::Simple::Tree -> new;
     my $uc_html = uc $html;
     $p -> parse($uc_html);
     $p -> traverse($p -> get_root );
@@ -29,7 +29,7 @@ is($html, $parser -> result(), 'Input matches output');
 {
     my $html = '<h1>test<h2>headers</h1>';
 
-    my $p = HTML::Parser::Simple -> new;
+    my $p = HTML::Parser::Simple::Tree -> new;
     $p -> parse($html);
     $p -> traverse($p -> get_root );
             is($p -> result, '<h1>test<h2>headers</h2></h1>'
@@ -60,7 +60,7 @@ my $html =<<"__HTML__";
 __HTML__
 
     local $TODO = "need a better HTML comparision tool that allows for differences in line breaks, etc"; 
-    my($p) = HTML::Parser::Simple -> new;
+    my($p) = HTML::Parser::Simple::Tree -> new;
     $p -> parse($html);
     $p -> traverse($p -> get_root );
     is($p -> result, $html, 'Input matches output, all upper-case version. ');

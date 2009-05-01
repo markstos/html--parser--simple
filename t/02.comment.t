@@ -2,7 +2,7 @@ use lib 't';
 
 use Data;
 
-use HTML::Parser::Simple;
+use HTML::Parser::Simple::Tree;
 
 use Test::More tests => 1;
 
@@ -10,7 +10,7 @@ use Test::More tests => 1;
 
 my($data)   = Data -> new;
 my($html)   = $data -> read_file('t/data/02.comment.html');
-my($parser) = HTML::Parser::Simple -> new();
+my($parser) = HTML::Parser::Simple::Tree -> new();
 
 $parser -> parse($html);
 $parser -> traverse($parser -> get_root() );
