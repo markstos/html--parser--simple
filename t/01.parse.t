@@ -26,6 +26,16 @@ is($html, $parser -> result(), 'Input matches output');
     is($p -> result, $uc_html, 'Input matches output, all upper-case version. ');
 }
 
+{
+    my $html = '<h1>test<h2>headers</h1>';
+
+    my $p = HTML::Parser::Simple -> new;
+    $p -> parse($html);
+    $p -> traverse($p -> get_root );
+            is($p -> result, '<h1>test<h2>headers</h2></h1>'
+                , 'testing <h1> and <h2> tags, which are not mentioned in the source');
+}
+
 TODO: {
 my $html =<<"__HTML__";
 <HTML>
