@@ -251,36 +251,33 @@ sub parse_end_tag {
 	# Find the closest opened tag of the same name.
     my $lc_tag_name = lc $tag_name;
 
-	my($pos);
+    # What's the furthest point up the stack we should travel?
+	my $pos;
 
+    # If we closing a specific tag, see how far up the stack it is
 	if ($tag_name) {
-		for ($pos = $#$stack; $pos >= 0; $pos--) {
+        STACKCHECK: for ($pos = $#$stack; $pos >= 0; $pos--) {
 			if ($$stack[$pos] eq $lc_tag_name) {
-				last;
+				last STACKCHECK;
 			}
 		}
 	}
+    # Otherwise, we are closing everthing.
 	else {
 		$pos = 0;
 	}
 
 	if ($pos >= 0) {
 		# Close all the open tags, up the stack.
+		my $count = 0;
 
-		my($count) = 0;
-
-		for (my($i) = $#$stack; $i >= $pos; $i--) {
+		for (my $i = $#$stack; $i >= $pos; $i--) {
 			$count++;
-
 			$self -> handle_end_tag($$stack[$i]);
 		}
 
 		# Remove the open elements from the stack.
-		# Does not work: $#$stack = $pos. Could use splice().
-
-		for ($count) {
-			pop @$stack;
-		}
+        splice @$stack, -$count;
 	}
 }
 
