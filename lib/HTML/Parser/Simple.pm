@@ -133,10 +133,11 @@ sub parse {
 
 			if ($s eq '</') {
 				if ($html =~ /^(<\/(\w+)[^>]*>)/) {
-					substr($html, 0, length $1) = '';
+                    my ($whole_tag,$tag_name) = ($1,$2);
+					substr($html, 0, length $whole_tag) = '';
 					$in_content                 = 0;
 
-					$self -> parse_end_tag($2, \@stack);
+					$self -> parse_end_tag($tag_name, \@stack);
 				}
 			}
 
