@@ -431,9 +431,11 @@ E.g.: <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">.
 
 =head2 parse($html)
 
+ $p = $p->parse($html)
+
 Parses the string of HTML in $html. As it encounters different types of content,
 bits of content are passed to different handlers, which you can define, to process
-the HTML as you wish. See the Description above for details.
+the HTML as you wish. Returns the parser object. See the Description above for details.
 
 =head1 See Also
 
