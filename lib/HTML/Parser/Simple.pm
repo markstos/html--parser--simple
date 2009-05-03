@@ -67,6 +67,8 @@ sub init {
     my $self = shift;
 	my $arg  = shift;
 
+    $self->{_stack} = [];
+
 	for my $attr_name ($self -> _standard_keys() ) {
 		my($arg_name) = $attr_name =~ /^_(.*)/;
 
@@ -116,16 +118,17 @@ sub parse {
 	 style  => 1,
 	);
 
-	my($in_content);
-	my($offset);
-	my(@stack, $s);
+	my($in_content,$offset,$s);
+
+    # Use $stack as a shorthand. Since they are both references, as $stack is updated, our internal stack will be too.
+	my $stack = $self->{_stack};
 
 	for (; $html;) {
 		$in_content = 1;
 
 		# Make sure we're not in a script or style element.
 
-		if (! $stack[$#stack] || ! $special{$stack[$#stack]}) {
+		if (! $$stack[$#$stack] || ! $special{$$stack[$#$stack]}) {
 			# Rearrange order of testing so rarer possiblilites are further down.
 			# Is it an end tag?
 
@@ -137,7 +140,7 @@ sub parse {
 					substr($html, 0, length $whole_tag) = '';
 					$in_content                 = 0;
 
-					$self -> parse_end_tag($tag_name, \@stack);
+					$self -> parse_end_tag($tag_name, $stack);
 				}
 			}
 
@@ -150,7 +153,7 @@ sub parse {
 						substr($html, 0, length $orig_text) = '';
 						$in_content                 = 0;
 
-						$self -> parse_start_tag($tag_name, $attr_string, $unary, \@stack);
+						$self -> parse_start_tag($tag_name, $attr_string, $unary, $stack);
 					}
 				}
 			}
@@ -221,7 +224,7 @@ sub parse {
 			}
 		}
 		else {
-			my($re) = "(.*)<\/$stack[$#stack]\[^>]*>";
+			my($re) = "(.*)<\/$$stack[$#$stack]\[^>]*>";
 
 			if ($html =~ /$re/s) {
 				my($text) = $1;
@@ -231,7 +234,7 @@ sub parse {
 				$self -> handle_content($text);
 			}
 
-			$self -> parse_end_tag($stack[$#stack], \@stack);
+			$self -> parse_end_tag($$stack[$#$stack], $stack);
 		}
 
 		if ($html eq $original) {
@@ -242,7 +245,7 @@ sub parse {
 	}
 
 	# Clean up any remaining tags.
-	$self -> parse_end_tag('', \@stack);
+	$self -> parse_end_tag('', $stack);
 }
 
 sub parse_end_tag {
