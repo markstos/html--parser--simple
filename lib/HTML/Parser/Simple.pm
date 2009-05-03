@@ -246,6 +246,9 @@ sub parse {
 
 	# Clean up any remaining tags.
 	$self -> parse_end_tag('', $stack);
+
+    # For compatibility with HTML::Parser;
+    return $self;
 }
 
 sub parse_end_tag {

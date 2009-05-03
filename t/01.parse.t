@@ -30,7 +30,10 @@ is($html, $parser -> result(), 'Input matches output');
     my $html = '<h1>test<h2>headers</h1>';
 
     my $p = HTML::Parser::Simple::Tree -> new;
-    $p -> parse($html);
+    my $returned = $p -> parse($html);
+
+    is( (ref $returned), "HTML::Parser::Simple::Tree", "parse() returns parser object, like HTML::Parser does.");
+
     $p -> traverse($p -> get_root );
             is($p -> result, '<h1>test<h2>headers</h2></h1>'
                 , 'testing <h1> and <h2> tags, which are not mentioned in the source');
