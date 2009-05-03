@@ -18,15 +18,10 @@ Be as compatible as possible with the HTML::Parser 2.x API
 sub parse_start_tag {
 	my($self, $tag_name, $attributes, $unary, $stack) = @_;
 
-#    warn "starting to parse $tag_name $attributes"; 
-
     my $a_parser = HTML::Parser::Simple::Attributes->new($attributes);
 
-#    warn "done parsing $tag_name $attributes"; 
     # All the attributes as a hashref
     my $attr_href = $a_parser->get_attr();
-
-#    warn "after get_attr";
 
     unless ($self->case_sensitive) {
         $tag_name = lc $tag_name;
@@ -36,8 +31,6 @@ sub parse_start_tag {
             $attr_href->{ lc $k } = delete $attr_href->{$k};
         }
     }
-
-    #warn "after lc attr_href";
 
     # This should happen even if case_sensitive isn't set, because it's about
     # internal hash lookups, not external display.
@@ -61,7 +54,6 @@ sub parse_start_tag {
     # but keep the parent's logic about when push something on the stack. 
     #	$unary = $$self{'_empty'}{$lc_tag_name} || $unary;
 	if (not ($$self{'_empty'}{$lc_tag_name} || $unary)) {
-        #warn "about to push $lc_tag_name on to the stack"; 
 		push @$stack, $lc_tag_name;
 	}
 
@@ -77,15 +69,12 @@ sub parse_start_tag {
         $attr_href->{'/'} = 1,
     }
 
-    #warn "start start: $orig_text";
 	$self ->start($tag_name, $attr_href, $attr_seq, $orig_text);
-    #warn "end of start: $orig_text";
 }
 sub start { die "must be defined in subclass"  }
 
 sub handle_content {
     my ($self,$origtext) = @_;
-#    warn "handle content";
     return $self->text($origtext);  
 }
 sub text { die "most be defined in subclass" } 
@@ -104,7 +93,6 @@ sub handle_end_tag {
 
     # XXX fake the $orig_text
     my $orig_text = "</$tag_name>";
-#    warn "in Compat end $orig_text";
     $self->end($tag_name,$orig_text);
 }
 sub end { die "must define in subclass" } 
