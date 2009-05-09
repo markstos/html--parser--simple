@@ -67,7 +67,8 @@ sub init {
     my $self = shift;
 	my $arg  = shift;
 
-    $self->{_stack} = [];
+    $self->{_stack}        = []; # list of start targs in the order they are found.
+    $self->{_in_content} = 0 ; # a boolean. Tracks whether the current point in parsing is in content or not. 
 
 	for my $attr_name ($self -> _standard_keys() ) {
 		my($arg_name) = $attr_name =~ /^_(.*)/;
@@ -118,13 +119,14 @@ sub parse {
 	 style  => 1,
 	);
 
-	my($in_content,$offset,$s);
+    my $offset; # position relative to the beginning of the chunk
+    my $s; # current snippet of HTML we are testing and parsing
 
     # Use $stack as a shorthand. Since they are both references, as $stack is updated, our internal stack will be too.
 	my $stack = $self->{_stack};
 
 	for (; $html;) {
-		$in_content = 1;
+		$self->{_in_content} = 1;
 
 		# Make sure we're not in a script or style element.
 
@@ -138,7 +140,7 @@ sub parse {
 				if ($html =~ /^(<\/(\w+)[^>]*>)/) {
                     my ($whole_tag,$tag_name) = ($1,$2);
 					substr($html, 0, length $whole_tag) = '';
-					$in_content                 = 0;
+					$self->{_in_content}                 = 0;
 
 					$self -> parse_end_tag($tag_name, $stack);
 				}
@@ -146,12 +148,12 @@ sub parse {
 
 			# Is it a start tag?
 
-			if ($in_content) {
+			if ($self->{_in_content}) {
 				if (substr($html, 0, 1) eq '<') {
 					if ($html =~ /$$self{'_tag_with_attribute'}/) {
                         my ($orig_text,$tag_name,$attr_string,$unary) = ($1,$2,$3,$4);
 						substr($html, 0, length $orig_text) = '';
-						$in_content                 = 0;
+						$self->{_in_content}                 = 0;
 
 						$self -> parse_start_tag($tag_name, $attr_string, $unary, $stack);
 					}
@@ -160,7 +162,7 @@ sub parse {
 
 			# Is it a comment?
 
-			if ($in_content) {
+			if ($self->{_in_content}) {
 				$s = substr($html, 0, 4);
 
 				if ($s eq '<!--') {
@@ -170,14 +172,14 @@ sub parse {
 						$self -> handle_comment(substr($html, 0, ($offset + 3) ) );
 
 						substr($html, 0, $offset + 3) = '';
-						$in_content                   = 0;
+						$self->{_in_content}                   = 0;
 					}
 				}
 			}
 
 			# Is it a doctype?
 
-			if ($in_content) {
+			if ($self->{_in_content}) {
 				$s = substr($html, 0, 9);
 
 				if ($s eq '<!DOCTYPE') {
@@ -187,14 +189,14 @@ sub parse {
 						$self -> handle_doctype(substr($html, 0, ($offset + 1) ) );
 
 						substr($html, 0, $offset + 1) = '';
-						$in_content                   = 0;
+						$self->{_in_content}                   = 0;
 					}
 				}
 			}
 
 			# Is is an XML declaration?
 
-			if ($self ->{'_xhtml'} && $in_content) {
+			if ($self ->{'_xhtml'} && $self->{_in_content}) {
 				$s = substr($html, 0, 5);
 
 				if ($s eq '<?xml') {
@@ -204,12 +206,12 @@ sub parse {
 						$self -> handle_xml_declaration(substr($html, 0, ($offset + 2) ) );
 
 						substr($html, 0, $offset + 2) = '';
-						$in_content                   = 0;
+						$self->{_in_content}                   = 0;
 					}
 				}
 			}
 
-			if ($in_content) {
+			if ($self->{_in_content}) {
 				$offset = index($html, '<');
 
 				if ($offset < 0) {

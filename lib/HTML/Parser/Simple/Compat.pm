@@ -36,16 +36,13 @@ sub parse_start_tag {
     # internal hash lookups, not external display.
     my $lc_tag_name = lc $tag_name;
 
-	if ($$self{'_block'}{$lc_tag_name})
-	{
-		for (; $#$stack >= 0 && $$self{'_inline'}{$$stack[$#$stack]};)
-		{
+	if ($$self{'_block'}{$lc_tag_name}) {
+		for (; $#$stack >= 0 && $$self{'_inline'}{$$stack[$#$stack]};) {
 			$self -> parse_end_tag($$stack[$#$stack], $stack);
 		}
 	}
 
-	if ($$self{'_close_self'}{$lc_tag_name} && ($$stack[$#$stack] eq $lc_tag_name) )
-	{
+	if ($$self{'_close_self'}{$lc_tag_name} && ($$stack[$#$stack] eq $lc_tag_name) ) {
 		$self -> parse_end_tag($tag_name, $stack);
 	}
 
