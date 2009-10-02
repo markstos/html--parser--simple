@@ -2,9 +2,11 @@ use Test::More 'no_plan';
 use strict;
 use warnings;
 
-use HTML::Parser::Simple::Attributes;
+use HTML::Parser::Simple;
 
-my $p = HTML::Parser::Simple::Attributes->new(
+my $p = HTML::Parser::Simple->new;
+
+my $a = $p->parse_attributes(
 q{ type=text name="my_name"
         value='my value'
         id="O'Hare"
@@ -12,7 +14,6 @@ q{ type=text name="my_name"
         with_space = "true"
     });
 
-my $a = $p->get_attr;
 
 is($a->{type},'text', 'unquoted attribute is parsed');
 is($a->{name},'my_name', 'double quoted attribute is parsed');
@@ -23,7 +24,7 @@ is($a->{checked},"checked", '"checked" is accepted and value is set to key ');
 
 {
     my $test = "test parse_attributes as class method";
-    my $a = HTML::Parser::Simple::Attributes->parse_attributes(
+    my $a = HTML::Parser::Simple->parse_attributes(
         q{ type=text name="my_name"
         value='my value'
         id="O'Hare"

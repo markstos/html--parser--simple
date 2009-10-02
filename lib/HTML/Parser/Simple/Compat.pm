@@ -1,6 +1,5 @@
 package HTML::Parser::Simple::Compat;
 use base 'HTML::Parser::Simple';
-use HTML::Parser::Simple::Attributes;
 
 use strict;
 use warnings;
@@ -16,18 +15,14 @@ Be as compatible as possible with the HTML::Parser 2.x API
 =cut
 
 sub parse_start_tag {
-	my($self, $tag_name, $attributes, $unary, $stack) = @_;
+	my($self, $tag_name, $attributes_str, $unary, $stack) = @_;
 
-    my $a_parser = HTML::Parser::Simple::Attributes->new($attributes);
-
-    # All the attributes as a hashref
-    my $attr_href = $a_parser->get_attr();
+    my $attr_href = $self->parse_attributes($attributes_str);
 
     unless ($self->case_sensitive) {
         $tag_name = lc $tag_name;
-        # XXX This could perhaps be more efficiently done with the Attributes module
         my @old_keys = keys %$attr_href;
-        for my $k (@old_keys) { 
+        for my $k (@old_keys) {
             $attr_href->{ lc $k } = delete $attr_href->{$k};
         }
     }
@@ -60,7 +55,7 @@ sub parse_start_tag {
     # XXX Fake orig text
     my $maybe_slash = $unary ? ' /' : '';
 #    $attributes ||= '';
-    my $orig_text = qq{<$tag_name$attributes$maybe_slash>};
+    my $orig_text = qq{<$tag_name$attributes_str$maybe_slash>};
 
     if ($unary) {
         $attr_href->{'/'} = 1,

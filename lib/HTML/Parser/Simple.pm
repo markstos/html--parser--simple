@@ -251,6 +251,56 @@ sub parse {
     return $self;
 }
 
+our $quote_re  = qr{^([a-zA-Z0-9_-]+)\s*=\s*["]([^"]+)["]\s*(.*)$}so; # regular quotes
+our $squote_re = qr{^([a-zA-Z0-9_-]+)\s*=\s*[']([^']+)[']\s*(.*)$}so; # single quotes
+our $uquote_re = qr{^([a-zA-Z0-9_-]+)\s*=\s*([^\s'"]+)\s*(.*)$}so;    # unquoted
+our $bool_re   = qr{^([a-zA-Z0-9_-]+)\s*(.*)$}so;                     # a boolean, like "checked"
+
+sub parse_attributes {
+    my $self = shift;
+    my $astring = shift;
+
+    # No attribute string? We're done. 
+    unless (defined $astring and length $astring) {
+        return {};
+    }
+
+    my %attrs;
+
+    # trim leading and trailing whitespace.
+    # XXX faster as two REs?
+    $astring =~ s/^\s+|\s+$//g;
+
+    my $org = $astring;
+    BIT: while (length $astring) {
+        for my  $m ($quote_re, $squote_re, $uquote_re) {
+            if ($astring =~ $m) {
+                my ($var,$val,$suffix) = ($1,$2,$3);
+                $attrs{$var} = $val;
+                $astring = $suffix;
+                next BIT;
+            }
+        }
+
+        # For booleans, set the value to the key.
+        # XXX, make this configurable, like with HTML::Parser's boolean_attribute_value method. 
+        if ($astring =~ $bool_re) {
+            my ($var,$suffix) = ($1,$2);
+            $attrs{$var} = $var;
+            $astring = $suffix;
+            next BIT;
+        }
+
+#        if ($astring eq $org) {
+            croak "parse_attributes: can't parse $astring - not a properly formed attribute string"
+#        }
+
+    }
+
+    return \%attrs;
+}
+
+
 sub eof {
     my $self = shift; 
     
@@ -367,8 +417,7 @@ subclass:
  sub handle_start_tag {
  	my($self, $tag_name, $attribute_string, $unary) = @_;
      # Sub-class to do something interesting.
-     # to parse the attribute string, see HTML::Parser::Simple::Attributes,
-     # which is included in this distribution.
+     # to parse the attribute string, see parse_attributes()
      return 1;
  }
 
@@ -458,6 +507,17 @@ modify the $string in-place until $p->parse returns.
 If an invoked event handler aborts parsing by calling $p->eof, then $p->parse()
 will return a FALSE value.
 
+=head2 parse_attributes
+
+ $attr_href = $p->parse_attributes($attr_string);
+ $attr_href = HTML::Parser::Simple->parse_attributes($attr_string);
+
+Parses a string of HTML attributes and returns the result as a hash ref, or
+dies if the string is a valid attribute string. Attribute values may be quoted
+with double quotes, single quotes, no quotes if there are no spaces in the value.
+
+May also be called as a class method.
+
 =head2 eof
 
 Signals the end of the HTML document. All remaining HTML tags on the internal 
@@ -470,11 +530,7 @@ is not yet fully compatible.
 
 =back
 
-
-
 =head1 See Also
-
-L<HTML::Parser::Simple::Attributes> - a helper module to parse start tag atttributes.
 
 =head1 Credits
 
