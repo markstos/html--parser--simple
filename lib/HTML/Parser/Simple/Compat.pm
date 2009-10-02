@@ -116,12 +116,6 @@ sub attr_encoded {
     # It doesn't do anything yet. 
 }
 
-sub eof {
-    my $self = shift; 
-    # XXX right now this is defined for compatibility,
-    # It doesn't do anything yet. 
-}
-
 =head2 case_sensitive() 
 
  $bool =  $p->case_sensitive($bool);

@@ -14,6 +14,7 @@ my($html)   = $data -> read_file('t/data/01.parse.html');
 my($parser) = HTML::Parser::Simple::Tree -> new();
 
 $parser -> parse($html);
+$parser -> eof;
 $parser -> traverse($parser -> get_root() );
 
 is($html, $parser -> result(), 'Input matches output');
@@ -22,6 +23,7 @@ is($html, $parser -> result(), 'Input matches output');
     my($p) = HTML::Parser::Simple::Tree -> new;
     my $uc_html = uc $html;
     $p -> parse($uc_html);
+    $p ->eof;
     $p -> traverse($p -> get_root );
     is($p -> result, $uc_html, 'Input matches output, all upper-case version. ');
 }
@@ -31,12 +33,26 @@ is($html, $parser -> result(), 'Input matches output');
 
     my $p = HTML::Parser::Simple::Tree -> new;
     my $returned = $p -> parse($html);
+    $p->eof;
 
     is( (ref $returned), "HTML::Parser::Simple::Tree", "parse() returns parser object, like HTML::Parser does.");
 
     $p -> traverse($p -> get_root );
             is($p -> result, '<h1>test<h2>headers</h2></h1>'
                 , 'testing <h1> and <h2> tags, which are not mentioned in the source');
+}
+
+{
+    my $html_1 = '<h1>test<h2>';
+    my $html_2 = 'headers</h1>';
+
+    my $p = HTML::Parser::Simple::Tree -> new;
+       $p -> parse($html_1);
+       $p -> parse($html_2);
+
+    $p -> traverse($p -> get_root );
+            is($p -> result, '<h1>test<h2>headers</h2></h1>'
+                , 'Basic test of calling parse() repeatedly, like HTML::Parser');
 }
 
 TODO: {

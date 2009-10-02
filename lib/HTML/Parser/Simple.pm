@@ -246,12 +246,21 @@ sub parse {
 		$original = $html;
 	}
 
-	# Clean up any remaining tags.
-	$self -> parse_end_tag('', $stack);
 
     # For compatibility with HTML::Parser;
     return $self;
 }
+
+sub eof {
+    my $self = shift; 
+    
+	# Clean up any remaining tags.
+	$self -> parse_end_tag('', $self->{_stack} );
+
+    return $self;
+}
+
+
 
 sub parse_end_tag {
 	my($self, $tag_name, $stack) = @_;
@@ -336,7 +345,12 @@ C<HTML::Parser::Simple> - Parse nice HTML files without needing a compiler
 	use HTML::Parser::Simple;
 	my $p = HTML::Parser::Simple->new;
 
-	$p->parse('<html>...</html>');
+   # Parse document text chunk by chunk
+   $p->parse($chunk1);
+   $p->parse($chunk2);
+   #...
+   $p->eof;                 # signal end of document
+
 
 =head1 Description
 
@@ -433,11 +447,30 @@ E.g.: <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">.
 
 =head2 parse($html)
 
- $p = $p->parse($html)
+ $p = $p->parse($string)
 
-Parses the string of HTML in $html. As it encounters different types of content,
-bits of content are passed to different handlers, which you can define, to process
-the HTML as you wish. Returns the parser object. See the Description above for details.
+Parse C<$string> as the next chunk of the HTML document.  As it encounters
+different types of content, bits of content are passed to different handlers,
+which you can define, to process the HTML as you wish. Returns the parser
+object. See the Description above for details.  Handlers should not attempt to
+modify the $string in-place until $p->parse returns.
+
+If an invoked event handler aborts parsing by calling $p->eof, then $p->parse()
+will return a FALSE value.
+
+=head2 eof
+
+Signals the end of the HTML document. All remaining HTML tags on the internal 
+parse stack will now be closed. 
+
+The return value from eof() is a reference to the parser object.
+
+The behavior of C<< eof () >> in HTML::Parser is more involved. This method
+is not yet fully compatible.
+
+=back
+
+
 
 =head1 See Also
 
