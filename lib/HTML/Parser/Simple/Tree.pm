@@ -50,8 +50,7 @@ sub init {
 #               and '<body>', and after '</body>'. It holds 'head' from
 #               '<head>' to </head>', and holds 'body' from '<body>' to
 #               '</body>'. It's just there in case you need it.
-sub create_new_node
-{
+sub create_new_node {
     my($self, $name, $orig_text, $parent) = @_;
     my($metadata) =
     {
@@ -63,29 +62,23 @@ sub create_new_node
     };
 
     return Tree::Simple -> new($metadata, $parent);
-
-} # End of create_new_node.
-
-# -----------------------------------------------
+}
 
 sub get_current_node {
     my($self) = @_;
     return $$self{'_current'};
 }
 
-sub handle_end_tag
-{
+sub handle_end_tag {
     my($self, $tag_name) = @_;
 
     my $lc_tag_name = lc $tag_name;
 
-    if ( ($lc_tag_name eq 'head') || ($lc_tag_name eq 'body') )
-    {
+    if ( ($lc_tag_name eq 'head') || ($lc_tag_name eq 'body') ) {
         $self -> set_node_type('global');
     }
 
-    if (! $$self{'_empty'}{$lc_tag_name})
-    {
+    if (! $$self{'_empty'}{$lc_tag_name}) {
          my $parent = $self -> get_current_node() -> getParent();
         # root is not an object so need special handling. 
         if ($parent eq 'root') {
@@ -97,8 +90,7 @@ sub handle_end_tag
             $self -> set_depth($self -> get_depth - 1);
         }
     }
-
-} # End of handle_end_tag.
+}
 
 sub comment {
     my ($self,$comment) = @_;
@@ -110,44 +102,36 @@ sub declaration {
     return $self->handle_content($declaration);
 }
 
-sub handle_content
-{
+sub handle_content {
     my($self, $s)                 = @_;
     my($count)                    = $self -> get_current_node() -> getChildCount();
     my($metadata)                 = $self -> get_current_node() -> getNodeValue();
     $$metadata{'content'}[$count] .= $s;
 
     $self -> get_current_node() -> setNodeValue($metadata);
-
-} # End of handle_content.
-
-
+}
 
 sub start {
     my($self, $tag_name, $attr_href, $attr_seq, $orig_text) = @_;
 
     $self -> set_depth($self -> get_depth() + 1);
 
-    if ($tag_name eq 'head')
-    {
+    if ($tag_name eq 'head') {
         $self -> set_node_type('head');
     }
-    elsif ($tag_name eq 'body')
-    {
+    elsif ($tag_name eq 'body') {
         $self -> set_node_type('body');
     }
 
     my($node) = $self -> create_new_node($tag_name, $orig_text, $self -> get_current_node() );
 
-    if (! $$self{'_empty'}{$tag_name})
-    {
+    if (! $$self{'_empty'}{$tag_name}) {
         $self -> set_current_node($node);
     }
 
 }
 
-sub parse_file
-{
+sub parse_file {
     my($self, $input_file_name, $output_file_name) = @_;
 
     open(INX, $input_file_name) || Carp::croak "Can't open($input_file_name): $!";
@@ -166,21 +150,19 @@ sub parse_file
     open(OUT, "> $output_file_name") || Carp::croak "Can't open(> $output_file_name): $!";
     print OUT $$self{'_result'};
     close OUT;
-
 }
 
 sub get_depth {
     my($self) = @_;
     return $$self{'_depth'};
-} 
+}
 
 sub get_root {
     my($self) = @_;
     return $$self{'_root'};
-} 
+}
 
-sub set_root
-{
+sub set_root {
     my($self, $node) = @_;
 
     if (! defined $node)
@@ -191,13 +173,9 @@ sub set_root
     $$self{'_root'} = $node;
 
     return;
+}
 
-} # End of set_root.
-
-
-
-sub traverse
-{
+sub traverse {
     my($self, $node) = @_;
     my(@child)       = $node -> getAllChildren();
     my($metadata)    = $node -> getNodeValue();
@@ -207,16 +185,14 @@ sub traverse
     # Special check to avoid printing '<root>' when we still need to output
     # the content of the root, e.g. the DOCTYPE.
 
-    if ($name ne 'root')
-    {
+    if ($name ne 'root') {
         $$self{'_result'} .= $$metadata{'orig_text'};
     }
 
     my($index);
     my($s);
 
-    for $index (0 .. $#child)
-    {
+    for $index (0 .. $#child) {
         $$self{'_result'} .= $index <= $#$content && defined($$content[$index]) ? $$content[$index] : '';
         $self -> traverse($child[$index]);
     }
@@ -230,12 +206,10 @@ sub traverse
     $$self{'_result'} .= $maybe_content;
 
     my $lc_name = lc $name;
-    if ((not $$self{'_empty'}{$lc_name}) && ($name ne 'root') )
-    {
+    if ((not $$self{'_empty'}{$lc_name}) && ($name ne 'root') ) {
          $$self{'_result'} .= "</$name>";
     }
-
-} # End of traverse.
+}
 
 sub set_depth {
     my($self, $depth) = @_;
@@ -247,7 +221,6 @@ sub set_depth {
     $$self{'_depth'} = $depth;
     return;
 }
-
 
 sub handle_parse_error {
     my ($self,$remaining_html) = @_;
@@ -277,17 +250,14 @@ sub get_node_type {
 sub set_current_node {
     my($self, $node) = @_;
 
-    if (! defined $node) {
-        Carp::croak "set_current_node() called with undef";
+    if (! defined $node) { Carp::croak "set_current_node() called with undef";
     }
     elsif (! ref $node ) {
         Carp::confess "set_current_node() called with non reference: $node"; 
     }
 
     $$self{'_current'} = $node;
-
     return;
-
 }
 
 sub set_node_type {
