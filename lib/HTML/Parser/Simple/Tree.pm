@@ -7,15 +7,15 @@ use Tree::Simple;
 
 =head1 Synopsis
 
-	use HTML::Parser::Simple::Tree;
-	my $p = HTML::Parser::Simple:Tree->new;
-	
-	$p->parse_file('in.html', 'out.html');
+    use HTML::Parser::Simple::Tree;
+    my $p = HTML::Parser::Simple:Tree->new;
+    
+    $p->parse_file('in.html', 'out.html');
     # or 
-	$p->parse('<html>...</html>');
-	
-	$p->traverse($p -> get_root() );
-	print $p->result();
+    $p->parse('<html>...</html>');
+    
+    $p->traverse($p -> get_root() );
+    print $p->result();
 
 =cut 
 
@@ -29,13 +29,13 @@ sub init {
     $self->case_sensitive(1);
 
     # The result of of traverse();
-	$$self{'_result'}    = '';
+    $$self{'_result'}    = '';
 
-	# Note: set_depth() and set_node_type() must be called before create_new_node().
-	$self -> set_depth(0);
-	$self -> set_node_type('global');
-	$self -> set_current_node($self -> create_new_node('root', '') );
-	$self -> set_root($self -> get_current_node() );
+    # Note: set_depth() and set_node_type() must be called before create_new_node().
+    $self -> set_depth(0);
+    $self -> set_node_type('global');
+    $self -> set_current_node($self -> create_new_node('root', '') );
+    $self -> set_root($self -> get_current_node() );
     return $self;
 }
 
@@ -52,43 +52,40 @@ sub init {
 #               '</body>'. It's just there in case you need it.
 sub create_new_node
 {
-	my($self, $name, $orig_text, $parent) = @_;
-	my($metadata) =
-	{
+    my($self, $name, $orig_text, $parent) = @_;
+    my($metadata) =
+    {
         orig_text  => $orig_text,
-		content    => [],
-		depth      => $self -> get_depth(),
-		name       => $name,
-		node_type  => $self -> get_node_type(),
-	};
+        content    => [],
+        depth      => $self -> get_depth(),
+        name       => $name,
+        node_type  => $self -> get_node_type(),
+    };
 
-	return Tree::Simple -> new($metadata, $parent);
+    return Tree::Simple -> new($metadata, $parent);
 
 } # End of create_new_node.
 
 # -----------------------------------------------
 
-sub get_current_node
-{
-	my($self) = @_;
-
-	return $$self{'_current'};
-
-} # End of get_current_node.
+sub get_current_node {
+    my($self) = @_;
+    return $$self{'_current'};
+}
 
 sub handle_end_tag
 {
-	my($self, $tag_name) = @_;
+    my($self, $tag_name) = @_;
 
     my $lc_tag_name = lc $tag_name;
 
-	if ( ($lc_tag_name eq 'head') || ($lc_tag_name eq 'body') )
-	{
-		$self -> set_node_type('global');
-	}
+    if ( ($lc_tag_name eq 'head') || ($lc_tag_name eq 'body') )
+    {
+        $self -> set_node_type('global');
+    }
 
-	if (! $$self{'_empty'}{$lc_tag_name})
-	{
+    if (! $$self{'_empty'}{$lc_tag_name})
+    {
          my $parent = $self -> get_current_node() -> getParent();
         # root is not an object so need special handling. 
         if ($parent eq 'root') {
@@ -99,7 +96,7 @@ sub handle_end_tag
             $self -> set_current_node($parent);
             $self -> set_depth($self -> get_depth - 1);
         }
-	}
+    }
 
 } # End of handle_end_tag.
 
@@ -115,85 +112,85 @@ sub declaration {
 
 sub handle_content
 {
-	my($self, $s)                 = @_;
-	my($count)                    = $self -> get_current_node() -> getChildCount();
-	my($metadata)                 = $self -> get_current_node() -> getNodeValue();
-	$$metadata{'content'}[$count] .= $s;
+    my($self, $s)                 = @_;
+    my($count)                    = $self -> get_current_node() -> getChildCount();
+    my($metadata)                 = $self -> get_current_node() -> getNodeValue();
+    $$metadata{'content'}[$count] .= $s;
 
-	$self -> get_current_node() -> setNodeValue($metadata);
+    $self -> get_current_node() -> setNodeValue($metadata);
 
 } # End of handle_content.
 
 
 
 sub start {
-	my($self, $tag_name, $attr_href, $attr_seq, $orig_text) = @_;
+    my($self, $tag_name, $attr_href, $attr_seq, $orig_text) = @_;
 
-	$self -> set_depth($self -> get_depth() + 1);
+    $self -> set_depth($self -> get_depth() + 1);
 
-	if ($tag_name eq 'head')
-	{
-		$self -> set_node_type('head');
-	}
-	elsif ($tag_name eq 'body')
-	{
-		$self -> set_node_type('body');
-	}
+    if ($tag_name eq 'head')
+    {
+        $self -> set_node_type('head');
+    }
+    elsif ($tag_name eq 'body')
+    {
+        $self -> set_node_type('body');
+    }
 
-	my($node) = $self -> create_new_node($tag_name, $orig_text, $self -> get_current_node() );
+    my($node) = $self -> create_new_node($tag_name, $orig_text, $self -> get_current_node() );
 
-	if (! $$self{'_empty'}{$tag_name})
-	{
-		$self -> set_current_node($node);
-	}
+    if (! $$self{'_empty'}{$tag_name})
+    {
+        $self -> set_current_node($node);
+    }
 
 }
 
 sub parse_file
 {
-	my($self, $input_file_name, $output_file_name) = @_;
+    my($self, $input_file_name, $output_file_name) = @_;
 
-	open(INX, $input_file_name) || Carp::croak "Can't open($input_file_name): $!";
-	my($html);
-	read(INX, $html, -s INX);
-	close INX;
+    open(INX, $input_file_name) || Carp::croak "Can't open($input_file_name): $!";
+    my($html);
+    read(INX, $html, -s INX);
+    close INX;
 
-	if (! defined $html)
-	{
-		Carp::croak "Can't read($input_file_name): $!"
-	}
+    if (! defined $html)
+    {
+        Carp::croak "Can't read($input_file_name): $!"
+    }
 
-	$self -> parse($html);
-	$self -> traverse($self -> get_root() );
+    $self -> parse($html);
+    $self -> traverse($self -> get_root() );
 
-	open(OUT, "> $output_file_name") || Carp::croak "Can't open(> $output_file_name): $!";
-	print OUT $$self{'_result'};
-	close OUT;
+    open(OUT, "> $output_file_name") || Carp::croak "Can't open(> $output_file_name): $!";
+    print OUT $$self{'_result'};
+    close OUT;
 
 }
 
 sub get_depth {
-	my($self) = @_;
-	return $$self{'_depth'};
+    my($self) = @_;
+    return $$self{'_depth'};
 } 
 
 sub get_root {
-	my($self) = @_;
-	return $$self{'_root'};
+    my($self) = @_;
+    return $$self{'_root'};
 } 
 
 sub set_root
 {
-	my($self, $node) = @_;
+    my($self, $node) = @_;
 
-	if (! defined $node)
-	{
-		Carp::croak "set_root() called with undef";
-	}
+    if (! defined $node)
+    {
+        Carp::croak "set_root() called with undef";
+    }
 
-	$$self{'_root'} = $node;
+    $$self{'_root'} = $node;
 
-	return;
+    return;
 
 } # End of set_root.
 
@@ -201,54 +198,54 @@ sub set_root
 
 sub traverse
 {
-	my($self, $node) = @_;
-	my(@child)       = $node -> getAllChildren();
-	my($metadata)    = $node -> getNodeValue();
-	my($content)     = $$metadata{'content'};
-	my($name)        = $$metadata{'name'};
+    my($self, $node) = @_;
+    my(@child)       = $node -> getAllChildren();
+    my($metadata)    = $node -> getNodeValue();
+    my($content)     = $$metadata{'content'};
+    my($name)        = $$metadata{'name'};
 
-	# Special check to avoid printing '<root>' when we still need to output
-	# the content of the root, e.g. the DOCTYPE.
+    # Special check to avoid printing '<root>' when we still need to output
+    # the content of the root, e.g. the DOCTYPE.
 
-	if ($name ne 'root')
-	{
-		$$self{'_result'} .= $$metadata{'orig_text'};
-	}
+    if ($name ne 'root')
+    {
+        $$self{'_result'} .= $$metadata{'orig_text'};
+    }
 
-	my($index);
-	my($s);
+    my($index);
+    my($s);
 
-	for $index (0 .. $#child)
-	{
-		$$self{'_result'} .= $index <= $#$content && defined($$content[$index]) ? $$content[$index] : '';
-		$self -> traverse($child[$index]);
-	}
+    for $index (0 .. $#child)
+    {
+        $$self{'_result'} .= $index <= $#$content && defined($$content[$index]) ? $$content[$index] : '';
+        $self -> traverse($child[$index]);
+    }
 
-	# Output the content after the last child node has been closed,
-	# but before the current node is closed.
+    # Output the content after the last child node has been closed,
+    # but before the current node is closed.
 
-	$index = $#child + 1;
+    $index = $#child + 1;
 
     my $maybe_content = $index <= $#$content && defined($$content[$index]) ? $$content[$index] : '';
-	$$self{'_result'} .= $maybe_content;
+    $$self{'_result'} .= $maybe_content;
 
     my $lc_name = lc $name;
-	if ((not $$self{'_empty'}{$lc_name}) && ($name ne 'root') )
-	{
+    if ((not $$self{'_empty'}{$lc_name}) && ($name ne 'root') )
+    {
          $$self{'_result'} .= "</$name>";
-	}
+    }
 
 } # End of traverse.
 
 sub set_depth {
-	my($self, $depth) = @_;
+    my($self, $depth) = @_;
 
-	if (! defined $depth) {
-		Carp::croak "set_depth() called with undef";
-	}
+    if (! defined $depth) {
+        Carp::croak "set_depth() called with undef";
+    }
 
-	$$self{'_depth'} = $depth;
-	return;
+    $$self{'_depth'} = $depth;
+    return;
 }
 
 
@@ -273,41 +270,41 @@ sub handle_parse_error {
 }
 
 sub get_node_type {
-	my($self) = @_;
-	return $$self{'_node_type'};
+    my($self) = @_;
+    return $$self{'_node_type'};
 }
 
 sub set_current_node {
-	my($self, $node) = @_;
+    my($self, $node) = @_;
 
-	if (! defined $node) {
-		Carp::croak "set_current_node() called with undef";
-	}
+    if (! defined $node) {
+        Carp::croak "set_current_node() called with undef";
+    }
     elsif (! ref $node ) {
         Carp::confess "set_current_node() called with non reference: $node"; 
     }
 
-	$$self{'_current'} = $node;
+    $$self{'_current'} = $node;
 
-	return;
+    return;
 
 }
 
 sub set_node_type {
-	my($self, $type) = @_;
+    my($self, $type) = @_;
 
-	if (! defined $type) {
-		Carp::croak "set_node_type() called with undef";
-	}
+    if (! defined $type) {
+        Carp::croak "set_node_type() called with undef";
+    }
 
-	$$self{'_node_type'} = $type;
-	return;
+    $$self{'_node_type'} = $type;
+    return;
 }
 
 # Perhaps should "get_traverse_result" to be consistent and clear
 sub result {
-	my($self) = @_;
-	return $$self{'_result'};
+    my($self) = @_;
+    return $$self{'_result'};
 }
 
 
@@ -542,17 +539,17 @@ I don't define 'a' to be inline, others do, e.g. http://www.w3.org/TR/html401/ a
 
 Inline means:
 
-	<a href = "#NAME"><div class = 'global_toc_text'>NAME</div></a>
+    <a href = "#NAME"><div class = 'global_toc_text'>NAME</div></a>
 
 will I<not> be parsed as an 'a' containing a 'div'.
 
 The 'a' tag will be closed before the 'div' is opened. So, the result will look like:
 
-	<a href = "#NAME"></a><div class = 'global_toc_text'>NAME</div>
+    <a href = "#NAME"></a><div class = 'global_toc_text'>NAME</div>
 
 To achieve what was presumably intended, use 'span':
 
-	<a href = "#NAME"><span class = 'global_toc_text'>NAME</span></a>
+    <a href = "#NAME"><span class = 'global_toc_text'>NAME</span></a>
 
 Some people (*cough* *cough*) have had to redo their entire websites due to this very problem.
 
