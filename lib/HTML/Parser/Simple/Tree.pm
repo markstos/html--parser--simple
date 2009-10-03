@@ -32,10 +32,10 @@ sub init {
     $$self{'_result'}    = '';
 
     # Note: set_depth() and set_node_type() must be called before create_new_node().
-    $self -> set_depth(0);
-    $self -> set_node_type('global');
-    $self -> set_current_node($self -> create_new_node('root', '') );
-    $self -> set_root($self -> get_current_node() );
+    $self->set_depth(0);
+    $self->set_node_type('global');
+    $self->set_current_node($self->create_new_node('root', '') );
+    $self->set_root($self->get_current_node() );
     return $self;
 }
 
@@ -69,7 +69,7 @@ sub get_current_node {
     return $$self{'_current'};
 }
 
-sub handle_end_tag {
+sub end { 
     my($self, $tag_name) = @_;
 
     my $lc_tag_name = lc $tag_name;
@@ -94,19 +94,19 @@ sub handle_end_tag {
 
 sub comment {
     my ($self,$comment) = @_;
-    return $self->handle_content($comment);
+    return $self->text($comment);
 }
 
 sub declaration {
     my ($self,$xml,$declaration) = @_;
-    return $self->handle_content($declaration);
+    return $self->text($declaration);
 }
 
-sub handle_content {
-    my($self, $s)                 = @_;
-    my($count)                    = $self -> get_current_node() -> getChildCount();
-    my($metadata)                 = $self -> get_current_node() -> getNodeValue();
-    $$metadata{'content'}[$count] .= $s;
+sub text {
+    my($self, $content)            = @_;
+    my($count)                     = $self -> get_current_node() -> getChildCount();
+    my($metadata)                  = $self -> get_current_node() -> getNodeValue();
+    $$metadata{'content'}[$count] .= $content;
 
     $self -> get_current_node() -> setNodeValue($metadata);
 }

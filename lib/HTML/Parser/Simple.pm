@@ -24,15 +24,10 @@ our $VERSION = '1.02';
     }
 }
 
+# This has no parallel in HTML::Parser. Perhaps we this should be the handled the same as "declaration()"?
 sub handle_doctype {
     my($self, $s) = @_;
-    $self -> handle_content($s);
-}
-
-sub handle_start_tag {
-    my($self, $tag_name, $attributes, $unary) = @_;
-    # Sub-class to do something interesting.
-    return 1;
+    $self->text($s);
 }
 
 sub new {
@@ -90,9 +85,7 @@ sub init {
 
     return $self;
 
-}   # End of new.
-
-# -----------------------------------------------
+}
 
 sub parse {
     my($self, $html) = @_;
@@ -152,7 +145,7 @@ sub parse {
                     $offset = index($html, '-->');
 
                     if ($offset >= 0) {
-                        $self -> handle_comment(substr($html, 0, ($offset + 3) ) );
+                        $self->comment(substr($html, 0, ($offset + 3) ) );
 
                         substr($html, 0, $offset + 3) = '';
                         $self->{_in_content}                   = 0;
@@ -169,7 +162,7 @@ sub parse {
                     $offset = index($html, '>');
 
                     if ($offset >= 0) {
-                        $self -> handle_doctype(substr($html, 0, ($offset + 1) ) );
+                        $self->handle_doctype(substr($html, 0, ($offset + 1) ) );
 
                         substr($html, 0, $offset + 1) = '';
                         $self->{_in_content}                   = 0;
@@ -187,7 +180,7 @@ sub parse {
 
                     if ($offset >= 0) {
                         my $xml = substr($html, 0, ($offset + 2) );
-                        $self -> handle_xml_declaration($xml);
+                        $self->declaration('xml',$xml);
                         substr($html, 0, $offset + 2) = '';
                         $self->{_in_content}                   = 0;
                     }
@@ -198,12 +191,12 @@ sub parse {
                 $offset = index($html, '<');
 
                 if ($offset < 0) {
-                    $self -> handle_content($html);
+                    $self->text($html);
 
                     $html = '';
                 }
                 else {
-                    $self -> handle_content(substr($html, 0, $offset) );
+                    $self->text(substr($html, 0, $offset) );
                     substr($html, 0, $offset) = '';
                 }
             }
@@ -216,7 +209,7 @@ sub parse {
                 $text     =~ s/<!--(.*?)-->/$1/g;
                 $text     =~ s/<!\[CDATA]\[(.*?)]]>/$1/g;
 
-                $self -> handle_content($text);
+                $self->text($text);
             }
 
             $self -> parse_end_tag($$stack[$#$stack], $stack);
@@ -307,9 +300,9 @@ sub parse_attributes {
 
 sub eof {
     my $self = shift; 
-    
+
     # Clean up any remaining tags.
-    $self -> parse_end_tag('', $self->{_stack} );
+    $self->parse_end_tag('', $self->{_stack} );
 
     return $self;
 }
@@ -348,7 +341,11 @@ sub parse_end_tag {
 
         for (my $i = $#$stack; $i >= $pos; $i--) {
             $count++;
-            $self -> handle_end_tag($$stack[$i]);
+
+            my $tag_name = $$stack[$i];
+            # XXX fake the $orig_text
+            my $orig_text = "</$tag_name>";
+            $self->end($tag_name,$orig_text);
         }
 
         # Remove the open elements from the stack.
@@ -402,46 +399,20 @@ sub parse_start_tag {
         $attr_href->{'/'} = 1,
     }
 
-    $self ->start($tag_name, $attr_href, $attr_seq, $orig_text);
+    $self->start($tag_name, $attr_href, $attr_seq, $orig_text);
 }
-sub start { die "must be defined in subclass"  }
-
-sub handle_content {
-    my ($self,$origtext) = @_;
-    return $self->text($origtext);  
-}
-sub text { die "most be defined in subclass" } 
-
-
-sub handle_end_tag {
-    my($self, $tag_name) = @_;
-
-    # XXX fake the $orig_text
-    my $orig_text = "</$tag_name>";
-    $self->end($tag_name,$orig_text);
-}
-sub end { die "must define in subclass" } 
-
-sub handle_comment {
-    my ($self,$origtext) = @_;
-    return $self->comment($origtext);  
-}
-sub comment { die "must be defined in subclass" } 
-
-sub handle_xml_declaration {
-    my ($self, $s) = @_;
-    # XXX, note we only handle XML, not HTML
-    $self->declaration('xml',$s);
-}
-sub declaration { die "must be defined in subclass" }; 
-
-# right now we don't call this. 
-sub process { die "must be defined in subclass" }; 
+sub start       { die "start() must be defined in subclass"  }
+sub text        { die "text() must be defined in subclass" }
+sub end         { die "end() must be defined in subclass" }
+sub comment     { die "comment() must be defined in subclass" }
+sub declaration { die "declaration() must be defined in subclass" }
+# right now we don't call this.
+# sub process   { die "process() must be defined in subclass" }
 
 sub attr_encoded {
-    my $self = shift; 
+    my $self = shift;
     # XXX right now this defined for compatibility,
-    # It doesn't do anything yet. 
+    # It doesn't do anything yet.
 }
 
 sub case_sensitive {
@@ -491,51 +462,52 @@ C<HTML::Parser::Simple> - Parse nice HTML files without needing a compiler
 
 =head1 Description
 
-C<HTML::Parser::Simple> is a pure Perl HTML and XHTML Parser.
+C<HTML::Parser::Simple> is a Pure-Perl HTML and XHTML Parser. It strives to be
+API-compatible with the HTML::Parser 2.x API.
 
-The way to use it is define handlers for the various types of
-content that it discovers during parsing. For now, this is done
-by defining handlers in a sub-class. A future version will allow
-defining the handlers inline with callbacks.
+Currently it is sufficiently compatible to be able to be used as an alternative
+super-class for L<HTML::FillInForm>. No other claims about compatibility are
+currently made beyond that, but patches are welcome that make it more compatible
+with the HTML::Parser APIs.
+
+The way to use it is define handlers for the various types of content that it
+discovers during parsing. For now, this is done by defining handlers in a
+sub-class. A future version may allow defining the handlers inline with
+callbacks.
 
 Here are the names and signatures of the handlers you can define in your
 subclass:
 
- sub handle_start_tag {
-    my($self, $tag_name, $attribute_string, $unary) = @_;
-     # Sub-class to do something interesting.
-     # to parse the attribute string, see parse_attributes()
-     return 1;
+ # Called when an end tag is encountered
+ sub end {
+    my($self, $tag_name, $orig_text) = @_;
+    return 1;
  }
 
- sub handle_end_tag {
-    my($self, $tag_name) = @_;
-     # Sub-class to do something interesting.
-     return 1;
+ # Called when a start tag is encountered
+ sub start {
+    my ($self, $tag_name, $attr_href, $attr_seq, $orig_text);
+    return 1;
  }
 
- # The stuff between the tags
- sub handle_content {
+ # Called when stuff between tags is encountered
+ sub text {
      my ($self, $content) = @_;
-     # Sub-class to do something interesting;
      return 1;
  }
 
- sub handle_comment {
+ # Called when an XML declaration is found
+ sub declaration {
+    my ($self,$declaration_type, $declaration);
+    # $declaration_type is usually 'xml'
+    return 1;
+ }
+
+ # Called when an HTML comment is found.
+ sub comment {
     my($self, $comment) = @_;
-    $self -> handle_content($comment);
+    return 1;
  }
-
- sub handle_doctype {
-    my($self, $doctype) = @_;
-    $self -> handle_content($doctype);
- }
-
- sub handle_xml_declaration {
-    my($self, $s) = @_;
-    $self->handle_content($s);
- }
-
 
 For an example, you can see a subclass which is included in this distribution:
 
@@ -660,7 +632,7 @@ http://groups.google.com/group/envjs/browse_thread/thread/edd9033b9273fa58
 =head1 Copyright
 
 Parts covered over Australian copyright (c) 2009 Ron Savage.
-Other parts are copyright (c) Mark Stosberg
+Other parts are copyright (c) 2009 Mark Stosberg
 
 You can redistribute and/or modify this Perl distribution under the terms of
 The Artistic License, a copy of which is available at:
