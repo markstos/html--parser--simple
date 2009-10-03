@@ -250,7 +250,8 @@ sub get_node_type {
 sub set_current_node {
     my($self, $node) = @_;
 
-    if (! defined $node) { Carp::croak "set_current_node() called with undef";
+    if (! defined $node) {
+        Carp::croak "set_current_node() called with undef";
     }
     elsif (! ref $node ) {
         Carp::confess "set_current_node() called with non reference: $node"; 
