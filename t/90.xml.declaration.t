@@ -10,4 +10,4 @@ my($parser) = HTML::Parser::Simple::Tree -> new({ xhtml => 1 });
 $parser -> parse($html);
 $parser -> traverse($parser -> get_root() );
 
-ok($parser -> result() =~ m/..xml.+?version.+?encoding/, 'XML declaration is preserved');
+like($parser -> result(), qr/..xml.+?version.+?encoding/, 'XML declaration is preserved');

@@ -25,6 +25,9 @@ sub init {
 
     $self->SUPER::init(@_); 
 
+    # XXX This default may change. 
+    $self->case_sensitive(1);
+
     # The result of of traverse();
 	$$self{'_result'}    = '';
 
@@ -40,7 +43,7 @@ sub init {
 # -----------------------------------------------
 # Create a new node to store the new tag.
 # Each node has metadata:
-# o attributes: The tag's attributes, as a string with N spaces as a prefix.
+# o orig_text   The tag before it was parsed.
 # o content:    The content before the tag was parsed.
 # o name:       The HTML tag.
 # o node_type:  This holds 'global' before '<head>' and between '</head>'
@@ -49,10 +52,10 @@ sub init {
 #               '</body>'. It's just there in case you need it.
 sub create_new_node
 {
-	my($self, $name, $attributes, $parent) = @_;
+	my($self, $name, $orig_text, $parent) = @_;
 	my($metadata) =
 	{
-		attributes => $attributes,
+        orig_text  => $orig_text,
 		content    => [],
 		depth      => $self -> get_depth(),
 		name       => $name,
@@ -100,6 +103,16 @@ sub handle_end_tag
 
 } # End of handle_end_tag.
 
+sub comment {
+    my ($self,$comment) = @_;
+    return $self->handle_content($comment);
+}
+
+sub declaration {
+    my ($self,$xml,$declaration) = @_;
+    return $self->handle_content($declaration);
+}
+
 sub handle_content
 {
 	my($self, $s)                 = @_;
@@ -113,9 +126,8 @@ sub handle_content
 
 
 
-sub handle_start_tag
-{
-	my($self, $tag_name, $attributes, $unary) = @_;
+sub start {
+	my($self, $tag_name, $attr_href, $attr_seq, $orig_text) = @_;
 
 	$self -> set_depth($self -> get_depth() + 1);
 
@@ -128,7 +140,7 @@ sub handle_start_tag
 		$self -> set_node_type('body');
 	}
 
-	my($node) = $self -> create_new_node($tag_name, $attributes, $self -> get_current_node() );
+	my($node) = $self -> create_new_node($tag_name, $orig_text, $self -> get_current_node() );
 
 	if (! $$self{'_empty'}{$tag_name})
 	{
@@ -200,7 +212,7 @@ sub traverse
 
 	if ($name ne 'root')
 	{
-		$$self{'_result'} .= "<$name$$metadata{'attributes'}>";
+		$$self{'_result'} .= $$metadata{'orig_text'};
 	}
 
 	my($index);
@@ -381,14 +393,9 @@ The data of each node is a hash ref. The keys/values of this hash ref are:
 
 =over 4
 
-=item attributes
+=item orig_text
 
-This is the string of HTML attributes associated with the HTML tag.
-
-So, <table align = 'center' bgColor = '#80c0ff' summary = 'Body'> will have an attributes string of
-" align = 'center' bgColor = '#80c0ff' summary = 'Body'".
-
-Note the leading space.
+The full HTML tag.
 
 =item content
 

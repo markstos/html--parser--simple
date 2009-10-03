@@ -24,37 +24,15 @@ our $VERSION = '1.02';
 	}
 }
 
-sub handle_comment {
-	my($self, $s) = @_;
-	$self -> handle_content($s);
-}
-
-sub handle_content {
-    my ($self, $content) = @_;
-    # Sub-class to do something interesting;
-    return 1;
-}
-
 sub handle_doctype {
 	my($self, $s) = @_;
 	$self -> handle_content($s);
-}
-
-sub handle_end_tag {
-	my($self, $tag_name) = @_;
-    # Sub-class to do something interesting.
-    return 1;
 }
 
 sub handle_start_tag {
 	my($self, $tag_name, $attributes, $unary) = @_;
     # Sub-class to do something interesting.
     return 1;
-}
-
-sub handle_xml_declaration {
-	my($self, $s) = @_;
-	$self->handle_content($s);
 }
 
 sub new {
@@ -96,14 +74,19 @@ sub init {
 
 	$$self{'_known_tag'} = {%{$$self{'_block'} }, %{$$self{'_close_self'} }, %{$$self{'_empty'} }, %{$$self{'_inline'} } };
 
-	if ($self ->{'_xhtml'} ) {
-		# Compared to the non-XHTML re, this has a extra  ':' just under the ':'.
+    # XHTML allows "xml:lang" in the <html> tag, but HTML does not allow colons in attribute names.
+    my $maybe_colon  = $self ->{'_xhtml'} ? ':' : '';
+    my $attr_name_re = qr/[${maybe_colon}a-zA-Z0-9_-]+/o;
 
-		$$self{'_tag_with_attribute'} = q#^(<(\w+)((?:\s+[-:\w]+(?:\s*=\s*(?:(?:"[^"]*")|(?:'[^']*')|[^>\s]+))?)*)\s*(\/?)>)#;
-	}
-	else {
-		$$self{'_tag_with_attribute'} = q#^(<(\w+)((?:\s+[-\w]+(?:\s*=\s*(?:(?:"[^"]*")|(?:'[^']*')|[^>\s]+))?)*)\s*(\/?)>)#;
-	}
+    # We currently do one pass to parse that we have a tag with attributes,
+    # and then a second pass to parse the attributes themselves.
+    # This could be optimized to capture everything we need in one pass. 
+    $$self{'_tag_with_attribute'} = qr#^(<(\w+)((?:\s+${attr_name_re}(?:\s*=\s*(?:(?:"[^"]*")|(?:'[^']*')|[^>\s]+))?)*)\s*(\/?)>)#o;
+
+    $$self{'_quote_re'}  = qr{^($attr_name_re)\s*=\s*["]([^"]+)["]\s*(.*)$}so; # regular quotes
+    $$self{'_squote_re'} = qr{^($attr_name_re)\s*=\s*[']([^']+)[']\s*(.*)$}so; # single quotes
+    $$self{'_uquote_re'} = qr{^($attr_name_re)\s*=\s*([^\s'"]+)\s*(.*)$}so;    # unquoted
+    $$self{'_bool_re'}   = qr{^($attr_name_re)\s*(.*)$}so;                     # a boolean, like "checked"
 
 	return $self;
 
@@ -137,7 +120,7 @@ sub parse {
 			$s = substr($html, 0, 2);
 
 			if ($s eq '</') {
-				if ($html =~ /^(<\/(\w+)[^>]*>)/) {
+				if ($html =~ /^(<\/(\w+)[^>]*>)/o) {
                     my ($whole_tag,$tag_name) = ($1,$2);
 					substr($html, 0, length $whole_tag) = '';
 					$self->{_in_content}                 = 0;
@@ -150,7 +133,7 @@ sub parse {
 
 			if ($self->{_in_content}) {
 				if (substr($html, 0, 1) eq '<') {
-					if ($html =~ /$$self{'_tag_with_attribute'}/) {
+					if ($html =~ $$self{'_tag_with_attribute'}) {
                         my ($orig_text,$tag_name,$attr_string,$unary) = ($1,$2,$3,$4);
 						substr($html, 0, length $orig_text) = '';
 						$self->{_in_content}                 = 0;
@@ -203,8 +186,8 @@ sub parse {
 					$offset = index($html, '?>');
 
 					if ($offset >= 0) {
-						$self -> handle_xml_declaration(substr($html, 0, ($offset + 2) ) );
-
+                        my $xml = substr($html, 0, ($offset + 2) );
+						$self -> handle_xml_declaration($xml);
 						substr($html, 0, $offset + 2) = '';
 						$self->{_in_content}                   = 0;
 					}
@@ -251,21 +234,40 @@ sub parse {
     return $self;
 }
 
-our $quote_re  = qr{^([a-zA-Z0-9_-]+)\s*=\s*["]([^"]+)["]\s*(.*)$}so; # regular quotes
-our $squote_re = qr{^([a-zA-Z0-9_-]+)\s*=\s*[']([^']+)[']\s*(.*)$}so; # single quotes
-our $uquote_re = qr{^([a-zA-Z0-9_-]+)\s*=\s*([^\s'"]+)\s*(.*)$}so;    # unquoted
-our $bool_re   = qr{^([a-zA-Z0-9_-]+)\s*(.*)$}so;                     # a boolean, like "checked"
+# Taken directly from HTML::Parser
+sub parse_file {
+    my($self, $file) = @_;
+    my $opened;
+    if (!ref($file) && ref(\$file) ne "GLOB") {
+        # Assume $file is a filename
+        local(*F);
+        open(F, $file) || return undef;
+        binmode(F);  # should we? good for byte counts
+        $opened++;
+        $file = *F;
+    }
+    my $chunk = '';
+    while (read($file, $chunk, 512)) {
+    $self->parse($chunk) || last;
+    }
+    close($file) if $opened;
+    $self->eof;
+}
+
+
+
 
 sub parse_attributes {
     my $self = shift;
     my $astring = shift;
 
-    # No attribute string? We're done. 
+    # No attribute string? We're done.
     unless (defined $astring and length $astring) {
         return {};
     }
 
     my %attrs;
+    my @attr_seq;
 
     # trim leading and trailing whitespace.
     # XXX faster as two REs?
@@ -273,21 +275,23 @@ sub parse_attributes {
 
     my $org = $astring;
     BIT: while (length $astring) {
-        for my  $m ($quote_re, $squote_re, $uquote_re) {
+        for my  $m ($$self{'_quote_re'}, $$self{'_squote_re'}, $$self{'_uquote_re'}) {
             if ($astring =~ $m) {
                 my ($var,$val,$suffix) = ($1,$2,$3);
                 $attrs{$var} = $val;
                 $astring = $suffix;
+                push @attr_seq, $var;
                 next BIT;
             }
         }
 
         # For booleans, set the value to the key.
         # XXX, make this configurable, like with HTML::Parser's boolean_attribute_value method. 
-        if ($astring =~ $bool_re) {
+        if ($astring =~ $$self{'_bool_re'}) {
             my ($var,$suffix) = ($1,$2);
             $attrs{$var} = $var;
             $astring = $suffix;
+            push @attr_seq, $var;
             next BIT;
         }
 
@@ -297,7 +301,7 @@ sub parse_attributes {
 
     }
 
-    return \%attrs;
+    return wantarray ? (\%attrs,\@attr_seq) : \%attrs;
 }
 
 
@@ -314,6 +318,10 @@ sub eof {
 
 sub parse_end_tag {
 	my($self, $tag_name, $stack) = @_;
+
+    unless ($self->case_sensitive) {
+        $tag_name = lc $tag_name;
+    }
 
 	# Find the closest opened tag of the same name.
     my $lc_tag_name = lc $tag_name;
@@ -348,9 +356,26 @@ sub parse_end_tag {
 	}
 }
 
-sub parse_start_tag {
-	my($self, $tag_name, $attributes, $unary, $stack) = @_;
+sub handle_parse_error {
+    my ($self,$remaining_html) = @_;
+    Carp::croak 'Parse error. Next 100 chars: '.substr($remaining_html, 0, 100);
+}
 
+sub parse_start_tag {
+	my($self, $tag_name, $attributes_str, $unary, $stack) = @_;
+
+    my ($attr_href,$attr_seq) = $self->parse_attributes($attributes_str);
+
+    unless ($self->case_sensitive) {
+        $tag_name = lc $tag_name;
+        my @old_keys = keys %$attr_href;
+        for my $k (@old_keys) {
+            $attr_href->{ lc $k } = delete $attr_href->{$k};
+        }
+    }
+
+    # This should happen even if case_sensitive isn't set, because it's about
+    # internal hash lookups, not external display.
     my $lc_tag_name = lc $tag_name;
 
 	if ($$self{'_block'}{$lc_tag_name}) {
@@ -363,18 +388,83 @@ sub parse_start_tag {
 		$self -> parse_end_tag($tag_name, $stack);
 	}
 
-	$unary = $$self{'_empty'}{$lc_tag_name} || $unary;
-
-	if (! $unary) {
+    #	$unary = $$self{'_empty'}{$lc_tag_name} || $unary;
+	if (not ($$self{'_empty'}{$lc_tag_name} || $unary)) {
 		push @$stack, $lc_tag_name;
 	}
 
-	$self -> handle_start_tag($tag_name, $attributes, $unary);
+    # XXX Fake orig text
+    my $maybe_slash = $unary ? ' /' : '';
+#    $attributes ||= '';
+    my $orig_text = qq{<$tag_name$attributes_str$maybe_slash>};
+
+    if ($unary) {
+        $attr_href->{'/'} = 1,
+    }
+
+	$self ->start($tag_name, $attr_href, $attr_seq, $orig_text);
+}
+sub start { die "must be defined in subclass"  }
+
+sub handle_content {
+    my ($self,$origtext) = @_;
+    return $self->text($origtext);  
+}
+sub text { die "most be defined in subclass" } 
+
+
+sub handle_end_tag {
+	my($self, $tag_name) = @_;
+
+    # XXX fake the $orig_text
+    my $orig_text = "</$tag_name>";
+    $self->end($tag_name,$orig_text);
+}
+sub end { die "must define in subclass" } 
+
+sub handle_comment {
+    my ($self,$origtext) = @_;
+    return $self->comment($origtext);  
+}
+sub comment { die "must be defined in subclass" } 
+
+sub handle_xml_declaration {
+    my ($self, $s) = @_;
+    # XXX, note we only handle XML, not HTML
+    $self->declaration('xml',$s);
+}
+sub declaration { die "must be defined in subclass" }; 
+
+# right now we don't call this. 
+sub process { die "must be defined in subclass" }; 
+
+sub attr_encoded {
+    my $self = shift; 
+    # XXX right now this defined for compatibility,
+    # It doesn't do anything yet. 
 }
 
-sub handle_parse_error {
-    my ($self,$remaining_html) = @_;
-    Carp::croak 'Parse error. Next 100 chars: '.substr($remaining_html, 0, 100);
+=head2 case_sensitive() 
+
+ $bool =  $p->case_sensitive($bool);
+
+By default, tagnames and attribute names are down-cased.  Enabling this
+attribute leaves them as found in the HTML source document.
+
+=cut
+
+sub case_sensitive {
+    my $self = shift;
+    my $bool = shift;
+    if (defined $bool) {
+        $self->{_case_sensitive} = $bool;
+    }
+
+    unless (defined $self->{_case_sensitive}) {
+        $self->{_case_sensitive} = 0;
+    }
+
+    return $self->{_case_sensitive}; 
 }
 
 # Given an array, return a hashref where the array elements are keys, and the values are "1"
@@ -400,6 +490,12 @@ C<HTML::Parser::Simple> - Parse nice HTML files without needing a compiler
    $p->parse($chunk2);
    #...
    $p->eof;                 # signal end of document
+
+   # Parse directly from file
+   $p->parse_file("foo.html");
+   # or
+   open(my $fh, "<:utf8", "foo.html") || die;
+   $p->parse_file($fh);
 
 
 =head1 Description
@@ -494,7 +590,7 @@ E.g.: <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">.
 
 =back
 
-=head2 parse($html)
+=head2 $p->parse($html)
 
  $p = $p->parse($string)
 
@@ -507,16 +603,41 @@ modify the $string in-place until $p->parse returns.
 If an invoked event handler aborts parsing by calling $p->eof, then $p->parse()
 will return a FALSE value.
 
-=head2 parse_attributes
+=head2 $p->parse_file( $file )
 
- $attr_href = $p->parse_attributes($attr_string);
- $attr_href = HTML::Parser::Simple->parse_attributes($attr_string);
+Parse text directly from a file.  The C<< $file >>  argument can be a
+filename, an open file handle, or a reference to an open file
+handle.
+
+If $file contains a filename and the file can't be opened, then the
+method returns an undefined value and $! tells why it failed.
+Otherwise the return value is a reference to the parser object.
+
+If a file handle is passed as the $file argument, then the file will
+normally be read until EOF, but not closed.
+
+If an invoked event handler aborts parsing by calling $p->eof,
+then $p->parse_file() may not have read the entire file.
+
+On systems with multi-byte line terminators, the values passed for the
+offset and length argspecs may be too low if parse_file() is called on
+a file handle that is not in binary mode.
+
+If a filename is passed in, then parse_file() will open the file in
+binary mode.
+
+
+=head2 $p->parse_attributes($attr_string)
+
+ ($attr_href,$attr_seq) = $p->parse_attributes($attr_string);
+  $attr_href            = $p->parse_attributes($attr_string);
 
 Parses a string of HTML attributes and returns the result as a hash ref, or
 dies if the string is a valid attribute string. Attribute values may be quoted
 with double quotes, single quotes, no quotes if there are no spaces in the value.
 
-May also be called as a class method.
+In list context, second return value is an arrayref which contains the keys in
+the order in which they were found.
 
 =head2 eof
 
