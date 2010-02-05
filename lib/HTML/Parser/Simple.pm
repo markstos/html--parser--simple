@@ -541,6 +541,8 @@ E.g.: <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">.
 
 =back
 
+=back
+
 =head2 $p->parse($html)
 
  $p = $p->parse($string)
@@ -607,8 +609,6 @@ By default, tagnames and attribute names are down-cased.  Enabling this
 attribute leaves them as found in the HTML source document.
 
 =cut
-
-=back
 
 =head1 See Also
 
