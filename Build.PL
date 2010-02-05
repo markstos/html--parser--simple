@@ -15,7 +15,13 @@ my($builder) = Module::Build -> new
 	{
 		Carp         => 0,
 		Tree::Simple => 0,
+        perl         => 5.006,
 	},
+    meta_merge => {
+      resources => {
+          repository => 'http://github.com/markstos/html--parser--simple',
+      },
+  },
 );
 
 $builder -> create_build_script();

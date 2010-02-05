@@ -2,8 +2,6 @@ package HTML::Parser::Simple;
 use strict;
 use warnings;
 
-require 5.006002;
-
 use Carp;
 
 our $VERSION = '1.02';
